@@ -1189,19 +1189,19 @@ impl SettingsView {
         let mut nav_items = vec![
             SettingsNavItem::Page(SettingsSection::Account),
             SettingsNavItem::Umbrella(SettingsUmbrella::new(
-                "Agents",
+                crate::i18n::I18nKey::SettingsUmbrellaAgents,
                 SettingsSection::ai_subpages().to_vec(),
             )),
             SettingsNavItem::Page(SettingsSection::BillingAndUsage),
             SettingsNavItem::Umbrella(SettingsUmbrella::new(
-                "Code",
+                crate::i18n::I18nKey::SettingsUmbrellaCode,
                 vec![
                     SettingsSection::CodeIndexing,
                     SettingsSection::EditorAndCodeReview,
                 ],
             )),
             SettingsNavItem::Umbrella(SettingsUmbrella::new(
-                "Cloud platform",
+                crate::i18n::I18nKey::SettingsUmbrellaCloudPlatform,
                 vec![
                     SettingsSection::CloudEnvironments,
                     SettingsSection::OzCloudAPIKeys,
@@ -2302,7 +2302,7 @@ impl View for SettingsView {
                     {
                         let page_active = section == self.current_settings_page;
                         buttons.add_child(
-                            page.render_page_button(appearance, *match_data, page_active)
+                            page.render_page_button(appearance, app, *match_data, page_active)
                                 .on_click(move |ctx, _, _| {
                                     ctx.dispatch_typed_action(SettingsAction::SelectAndRefresh(
                                         section,
@@ -2335,7 +2335,7 @@ impl View for SettingsView {
                     // across the full clickable area, not just the text.
                     buttons.add_child(
                         umbrella
-                            .render_umbrella_row(appearance)
+                            .render_umbrella_row(appearance, app)
                             .on_click(move |ctx, _, _| {
                                 ctx.dispatch_typed_action(SettingsAction::ToggleUmbrella(
                                     nav_index,
@@ -2366,9 +2366,9 @@ impl View for SettingsView {
                             }
 
                             let is_active = subpage_section == self.current_settings_page;
-                            if let Some(hoverable) = umbrella
-                                .render_subpage_button(sub_idx, appearance, match_data, is_active)
-                            {
+                            if let Some(hoverable) = umbrella.render_subpage_button(
+                                sub_idx, appearance, app, match_data, is_active,
+                            ) {
                                 buttons.add_child(
                                     hoverable
                                         .on_click(move |ctx, _, _| {

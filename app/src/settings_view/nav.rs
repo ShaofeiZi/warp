@@ -1,4 +1,5 @@
 use crate::appearance::Appearance;
+use crate::i18n::I18nKey;
 use crate::ui_components::icons::Icon;
 use pathfinder_geometry::vector::vec2f;
 use warpui::{
@@ -7,6 +8,7 @@ use warpui::{
         button::{ButtonVariant, TextAndIcon, TextAndIconAlignment},
         components::{Coords, UiComponent, UiComponentStyles},
     },
+    SingletonEntity,
 };
 
 use super::{
@@ -22,7 +24,7 @@ const SUBPAGE_LEFT_MARGIN: f32 = NAV_ITEM_LEFT_MARGIN + 12.;
 
 /// A collapsible group of settings subpages in the sidebar.
 pub struct SettingsUmbrella {
-    pub label: &'static str,
+    pub label: I18nKey,
     pub subpages: Vec<SettingsSection>,
     pub expanded: bool,
     /// Saved expanded state from before search began, restored when search is cleared.
@@ -32,7 +34,7 @@ pub struct SettingsUmbrella {
 }
 
 impl SettingsUmbrella {
-    pub fn new(label: &'static str, subpages: Vec<SettingsSection>) -> Self {
+    pub fn new(label: I18nKey, subpages: Vec<SettingsSection>) -> Self {
         let subpage_count = subpages.len();
         Self {
             label,
@@ -59,7 +61,11 @@ impl SettingsUmbrella {
     /// Returns a `Hoverable` so the entire row shares a single hover/click
     /// target — i.e. the hover styling and pointing-hand cursor apply to the
     /// whole clickable area rather than just the text.
-    pub fn render_umbrella_row(&self, appearance: &Appearance) -> Hoverable {
+    pub fn render_umbrella_row(
+        &self,
+        appearance: &Appearance,
+        app: &warpui::AppContext,
+    ) -> Hoverable {
         let chevron_icon = if self.expanded {
             Icon::ChevronUp
         } else {
@@ -79,7 +85,7 @@ impl SettingsUmbrella {
             .button(ButtonVariant::Text, self.button_state_handle.clone())
             .with_text_and_icon_label(TextAndIcon::new(
                 TextAndIconAlignment::TextFirst,
-                self.label.to_string(),
+                crate::i18n::I18n::as_ref(app).tr(self.label),
                 chevron_icon.to_warpui_icon(text_color),
                 MainAxisSize::Max,
                 MainAxisAlignment::SpaceBetween,
@@ -99,13 +105,15 @@ impl SettingsUmbrella {
         &self,
         index: usize,
         appearance: &Appearance,
+        app: &warpui::AppContext,
         match_data: MatchData,
         is_active: bool,
     ) -> Option<Hoverable> {
         let section = self.subpages.get(index)?;
         let mouse_state = self.subpage_button_states.get(index)?.clone();
 
-        let label = section.to_string() + &match_data.to_string();
+        let label = super::settings_page::localized_settings_section(*section, app)
+            + &match_data.to_string();
 
         let hoverable = appearance
             .ui_builder()

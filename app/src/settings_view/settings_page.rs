@@ -26,6 +26,7 @@ use super::{
 };
 use crate::{
     appearance::Appearance,
+    i18n::{I18n, I18nKey},
     settings::CloudPreferencesSettings,
     themes::theme::Fill,
     ui_components::icons::Icon,
@@ -171,9 +172,11 @@ impl SettingsPage {
     pub fn render_page_button(
         &self,
         appearance: &Appearance,
+        app: &AppContext,
         match_data: MatchData,
         clicked: bool,
     ) -> Hoverable {
+        let label = localized_settings_section(self.section, app);
         appearance
             .ui_builder()
             .button(
@@ -184,7 +187,7 @@ impl SettingsPage {
                 },
                 self.button_state_handle.clone(),
             )
-            .with_text_label(self.section.to_string() + &match_data.to_string())
+            .with_text_label(label + &match_data.to_string())
             .with_style(
                 UiComponentStyles::default()
                     .set_border_width(0.)
@@ -193,6 +196,38 @@ impl SettingsPage {
             )
             .build()
     }
+}
+
+pub(super) fn localized_settings_section(section: SettingsSection, app: &AppContext) -> String {
+    let key = match section {
+        SettingsSection::Account => Some(I18nKey::SettingsSectionAccount),
+        SettingsSection::Appearance => Some(I18nKey::SettingsSectionAppearance),
+        SettingsSection::Features => Some(I18nKey::SettingsSectionFeatures),
+        SettingsSection::Keybindings => Some(I18nKey::SettingsSectionKeybindings),
+        SettingsSection::Privacy => Some(I18nKey::SettingsSectionPrivacy),
+        SettingsSection::BillingAndUsage => Some(I18nKey::SettingsSectionBillingAndUsage),
+        SettingsSection::SharedBlocks => Some(I18nKey::SettingsSectionSharedBlocks),
+        SettingsSection::MCPServers => Some(I18nKey::SettingsSectionMcpServers),
+        SettingsSection::WarpDrive => Some(I18nKey::SettingsSectionWarpDrive),
+        SettingsSection::WarpAgent => Some(I18nKey::SettingsSectionWarpAgent),
+        SettingsSection::AgentProfiles => Some(I18nKey::SettingsSectionAgentProfiles),
+        SettingsSection::AgentMCPServers => Some(I18nKey::SettingsSectionAgentMcpServers),
+        SettingsSection::Knowledge => Some(I18nKey::SettingsSectionKnowledge),
+        SettingsSection::ThirdPartyCLIAgents => Some(I18nKey::SettingsSectionThirdPartyCliAgents),
+        SettingsSection::CodeIndexing => Some(I18nKey::SettingsSectionCodeIndexing),
+        SettingsSection::EditorAndCodeReview => Some(I18nKey::SettingsSectionEditorAndCodeReview),
+        SettingsSection::CloudEnvironments => Some(I18nKey::SettingsSectionCloudEnvironments),
+        SettingsSection::OzCloudAPIKeys => Some(I18nKey::SettingsSectionCloudApiKeys),
+        SettingsSection::Teams => Some(I18nKey::SettingsSectionTeams),
+        SettingsSection::Warpify => Some(I18nKey::SettingsSectionWarpify),
+        SettingsSection::Referrals => Some(I18nKey::SettingsSectionReferrals),
+        SettingsSection::About => Some(I18nKey::SettingsSectionAbout),
+        SettingsSection::AI => Some(I18nKey::SettingsSectionAi),
+        SettingsSection::Code => Some(I18nKey::SettingsSectionCode),
+    };
+
+    key.map(|key| I18n::as_ref(app).tr(key))
+        .unwrap_or_else(|| section.to_string())
 }
 
 #[derive(PartialEq, Eq)]
@@ -1654,11 +1689,15 @@ impl<V: warpui::View> PageType<V> {
                         if let Some(subtitle) = category.subtitle {
                             page.add_child(render_sub_header_with_description(
                                 appearance,
-                                category.title,
-                                subtitle,
+                                category.title.render(app),
+                                subtitle.render(app),
                             ));
                         } else {
-                            page.add_child(render_sub_header(appearance, category.title, None));
+                            page.add_child(render_sub_header(
+                                appearance,
+                                category.title.render(app),
+                                None,
+                            ));
                         }
                     }
                     for widget in &category.widgets {
@@ -1773,6 +1812,37 @@ impl<V: warpui::View> PageType<V> {
 }
 
 /// The results from a [`PageType`] with only matching [`SettingsWidget`]s.
+#[derive(Clone, Copy)]
+pub(super) enum SettingsText {
+    Static(&'static str),
+    I18n(I18nKey),
+}
+
+impl SettingsText {
+    fn render(self, app: &AppContext) -> String {
+        match self {
+            Self::Static(text) => text.to_owned(),
+            Self::I18n(key) => I18n::as_ref(app).tr(key),
+        }
+    }
+
+    fn is_empty(self) -> bool {
+        matches!(self, Self::Static(""))
+    }
+}
+
+impl From<&'static str> for SettingsText {
+    fn from(value: &'static str) -> Self {
+        Self::Static(value)
+    }
+}
+
+impl From<I18nKey> for SettingsText {
+    fn from(value: I18nKey) -> Self {
+        Self::I18n(value)
+    }
+}
+
 pub(super) enum FilteredPageType<'a, V: warpui::View> {
     Monolith {
         widget: Option<&'a dyn SettingsWidget<View = V>>,
@@ -1798,8 +1868,8 @@ pub(super) enum FilteredPageType<'a, V: warpui::View> {
 
 /// A grouping of related [`SettingsWidget`]s that fall under the same sub-header.
 pub(super) struct Category<V: warpui::View> {
-    title: &'static str,
-    subtitle: Option<&'static str>,
+    title: SettingsText,
+    subtitle: Option<SettingsText>,
     widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
 }
 
@@ -1809,22 +1879,39 @@ impl<V: warpui::View> Category<V> {
         widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
     ) -> Self {
         Self {
-            title,
+            title: SettingsText::Static(title),
+            subtitle: None,
+            widgets,
+        }
+    }
+
+    pub(super) fn new_i18n(
+        title: I18nKey,
+        widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
+    ) -> Self {
+        Self {
+            title: SettingsText::I18n(title),
             subtitle: None,
             widgets,
         }
     }
 
     pub(super) fn with_subtitle(mut self, subtitle: &'static str) -> Self {
-        self.subtitle = Some(subtitle);
+        self.subtitle = Some(SettingsText::Static(subtitle));
+        self
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn with_i18n_subtitle(mut self, subtitle: I18nKey) -> Self {
+        self.subtitle = Some(SettingsText::I18n(subtitle));
         self
     }
 }
 
 /// A [`Category`] with only the results which match a search query.
 pub(super) struct FilteredCategory<'a, V: warpui::View> {
-    pub(super) title: &'static str,
-    pub(super) subtitle: Option<&'static str>,
+    pub(super) title: SettingsText,
+    pub(super) subtitle: Option<SettingsText>,
     pub(super) widgets: Vec<&'a dyn SettingsWidget<View = V>>,
 }
 

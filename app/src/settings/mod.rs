@@ -37,6 +37,7 @@ mod vim_banner;
 #[path = "schema_validation_tests.rs"]
 mod schema_validation_tests;
 
+pub use crate::i18n::I18nSettings;
 pub use accessibility::*;
 pub use ai::*;
 pub use alias_expansion::*;

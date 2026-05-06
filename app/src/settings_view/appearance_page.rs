@@ -23,6 +23,7 @@ use crate::editor::{
     EditOrigin, Event as EditorEvent, InteractionState, SingleLineEditorOptions, TextOptions,
 };
 use crate::gpu_state::{GPUState, GPUStateEvent};
+use crate::i18n::{I18n, I18nKey, I18nSettings, Locale};
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::server::telemetry::InputUXChangeOrigin;
 use crate::settings::{
@@ -432,6 +433,7 @@ pub enum AppearancePageAction {
     SetLineHeight,
     SetOpacity(f32),
     SetBlur(f32),
+    SetLocale(Locale),
     OpacitySliderDragged(f32),
     BlurSliderDragged(f32),
     SetFontFamily(String),
@@ -490,6 +492,7 @@ pub struct AppearanceSettingsPageView {
     line_height_editor: ViewHandle<EditorView>,
     notebook_font_size_editor: ViewHandle<EditorView>,
     ai_font_family_dropdown: ViewHandle<FilterableDropdown<AppearancePageAction>>,
+    language_dropdown: ViewHandle<Dropdown<AppearancePageAction>>,
     new_window_columns_editor: ViewHandle<EditorView>,
     valid_new_window_columns: bool,
     new_window_rows_editor: ViewHandle<EditorView>,
@@ -552,6 +555,15 @@ impl TypedActionView for AppearanceSettingsPageView {
             SetLineHeight => self.set_line_height_ratio(ctx),
             SetOpacity(value) => self.set_opacity(*value, true, ctx),
             SetBlur(value) => self.set_blur(*value, true, ctx),
+            SetLocale(locale) => {
+                I18nSettings::handle(ctx).update(ctx, |settings, ctx| {
+                    report_if_error!(settings.locale.set_value(*locale, ctx));
+                });
+                self.language_dropdown.update(ctx, |dropdown, ctx| {
+                    dropdown.set_selected_by_action(AppearancePageAction::SetLocale(*locale), ctx);
+                });
+                ctx.notify();
+            }
             SetFontFamily(name) => self.set_font_family(name, ctx),
             SetAIFontFamily(name) => {
                 self.set_ai_font_family(name, ctx);
@@ -774,6 +786,12 @@ impl AppearanceSettingsPageView {
 
         let appearance_handle = Appearance::handle(ctx);
         ctx.subscribe_to_model(&appearance_handle, Self::handle_appearance_update);
+
+        let i18n_handle = I18n::handle(ctx);
+        ctx.subscribe_to_model(&i18n_handle, |me, _, _, ctx| {
+            me.language_dropdown = Self::build_language_dropdown(ctx);
+            ctx.notify();
+        });
 
         ctx.subscribe_to_model(&PaneSettings::handle(ctx), |_, _, _, ctx| {
             ctx.notify();
@@ -1169,6 +1187,8 @@ impl AppearanceSettingsPageView {
             dropdown
         });
 
+        let language_dropdown = Self::build_language_dropdown(ctx);
+
         let context_chips = Self::get_context_chip_renderers(ctx);
 
         let alt_screen_padding_editor = {
@@ -1205,6 +1225,7 @@ impl AppearanceSettingsPageView {
             window_id: ctx.window_id(),
             local_only_icon_tooltip_states: Default::default(),
             ai_font_family_dropdown,
+            language_dropdown,
             notebook_font_size_editor,
             font_size_editor,
             line_height_editor,
@@ -1244,18 +1265,51 @@ impl AppearanceSettingsPageView {
         }
     }
 
+    fn build_language_dropdown(
+        ctx: &mut ViewContext<Self>,
+    ) -> ViewHandle<Dropdown<AppearancePageAction>> {
+        let current_locale = *I18nSettings::as_ref(ctx).locale.value();
+        ctx.add_typed_action_view(move |ctx| {
+            let items = {
+                let i18n = I18n::as_ref(ctx);
+                Locale::supported()
+                    .iter()
+                    .map(|locale| {
+                        let label = match locale {
+                            Locale::EnUs => i18n.tr(I18nKey::SettingsAppearanceLanguageEnglish),
+                            Locale::ZhCn => i18n.tr(I18nKey::SettingsAppearanceLanguageZhCn),
+                        };
+                        DropdownItem::new(label, AppearancePageAction::SetLocale(*locale))
+                    })
+                    .collect()
+            };
+            let mut dropdown = Dropdown::new(ctx);
+            dropdown.set_top_bar_max_width(INPUT_MODE_DROPDOWN_WIDTH);
+            dropdown.set_menu_width(INPUT_MODE_DROPDOWN_WIDTH, ctx);
+            dropdown.add_items(items, ctx);
+            dropdown.set_selected_by_action(AppearancePageAction::SetLocale(current_locale), ctx);
+            dropdown
+        })
+    }
+
     fn build_page(ctx: &mut ViewContext<Self>) -> PageType<Self> {
-        let mut categories = vec![Category::new(
-            "Themes",
-            vec![
-                Box::new(CreateCustomThemeWidget::default()),
-                Box::new(ThemeSelectWidget::default()),
-            ],
-        )];
+        let mut categories = vec![
+            Category::new_i18n(
+                I18nKey::SettingsAppearanceCategoryLanguage,
+                vec![Box::new(LanguageWidget)],
+            ),
+            Category::new_i18n(
+                I18nKey::SettingsAppearanceCategoryThemes,
+                vec![
+                    Box::new(CreateCustomThemeWidget::default()),
+                    Box::new(ThemeSelectWidget::default()),
+                ],
+            ),
+        ];
 
         if AppIconSettings::as_ref(ctx).is_supported_on_current_platform() {
-            categories.push(Category::new(
-                "Icon",
+            categories.push(Category::new_i18n(
+                I18nKey::SettingsAppearanceCategoryIcon,
                 vec![Box::new(CustomAppIconWidget::default())],
             ));
         }
@@ -1299,7 +1353,10 @@ impl AppearanceSettingsPageView {
         }
 
         if !window_settings_widgets.is_empty() {
-            categories.push(Category::new("Window", window_settings_widgets));
+            categories.push(Category::new_i18n(
+                I18nKey::SettingsAppearanceCategoryWindow,
+                window_settings_widgets,
+            ));
         }
 
         // Create the Input category with all widgets
@@ -1311,10 +1368,13 @@ impl AppearanceSettingsPageView {
             Box::new(InputModeWidget::default()),
         ];
 
-        categories.push(Category::new("Input", category_widgets));
+        categories.push(Category::new_i18n(
+            I18nKey::SettingsAppearanceCategoryInput,
+            category_widgets,
+        ));
 
-        categories.push(Category::new(
-            "Panes",
+        categories.push(Category::new_i18n(
+            I18nKey::SettingsAppearanceCategoryPanes,
             vec![
                 Box::new(DimInactivePanesWidget::default()),
                 Box::new(FocusFollowsMouseWidget::default()),
@@ -1328,7 +1388,10 @@ impl AppearanceSettingsPageView {
         if FeatureFlag::MinimalistUI.is_enabled() {
             block_settings_widgets.push(Box::new(ShowBlockDividersWidget::default()));
         }
-        categories.push(Category::new("Blocks", block_settings_widgets));
+        categories.push(Category::new_i18n(
+            I18nKey::SettingsAppearanceCategoryBlocks,
+            block_settings_widgets,
+        ));
 
         let font_settings = FontSettings::as_ref(ctx);
         let mut text_settings_widgets: Vec<Box<dyn SettingsWidget<View = Self>>> = vec![
@@ -1357,10 +1420,13 @@ impl AppearanceSettingsPageView {
             text_settings_widgets.push(Box::new(LigaturesWidget::default()));
         }
 
-        categories.push(Category::new("Text", text_settings_widgets));
+        categories.push(Category::new_i18n(
+            I18nKey::SettingsAppearanceCategoryText,
+            text_settings_widgets,
+        ));
 
-        categories.push(Category::new(
-            "Cursor",
+        categories.push(Category::new_i18n(
+            I18nKey::SettingsAppearanceCategoryCursor,
             vec![
                 Box::new(CursorTypeWidget::default()),
                 Box::new(BlinkingCursorWidget::default()),
@@ -1406,10 +1472,13 @@ impl AppearanceSettingsPageView {
             tab_settings_widgets.push(Box::new(DirectoryTabColorsWidget { add_picker }));
         }
 
-        categories.push(Category::new("Tabs", tab_settings_widgets));
+        categories.push(Category::new_i18n(
+            I18nKey::SettingsAppearanceCategoryTabs,
+            tab_settings_widgets,
+        ));
 
-        categories.push(Category::new(
-            "Full-screen Apps",
+        categories.push(Category::new_i18n(
+            I18nKey::SettingsAppearanceCategoryFullScreenApps,
             vec![Box::new(AltScreenPaddingWidget::default())],
         ));
 
@@ -2597,13 +2666,13 @@ impl SettingsWidget for CreateCustomThemeWidget {
         &self,
         _view: &Self::View,
         appearance: &Appearance,
-        _app: &AppContext,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         Align::new(
             appearance
                 .ui_builder()
                 .link(
-                    "Create your own custom theme".to_string(),
+                    I18n::as_ref(app).tr(I18nKey::SettingsAppearanceCreateCustomTheme),
                     Some("https://docs.warp.dev/terminal/appearance/custom-themes".to_string()),
                     None,
                     self.mouse_state.clone(),
@@ -2759,7 +2828,7 @@ impl SettingsWidget for ThemeSelectWidget {
         Flex::column()
             .with_cross_axis_alignment(CrossAxisAlignment::Stretch)
             .with_child(render_body_item::<AppearancePageAction>(
-                "Sync with OS".into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsAppearanceSyncWithOs),
                 None,
                 LocalOnlyIconState::for_setting(
                     UseSystemTheme::storage_key(),
@@ -2786,10 +2855,7 @@ impl SettingsWidget for ThemeSelectWidget {
             .with_child(
                 appearance
                     .ui_builder()
-                    .span(
-                        "Automatically switch between light and dark themes when your system does."
-                            .to_string(),
-                    )
+                    .span(I18n::as_ref(app).tr(I18nKey::SettingsAppearanceSyncWithOsDescription))
                     .with_style(
                         UiComponentStyles::default().set_margin(Coords::default().bottom(10.)),
                     )
@@ -2843,8 +2909,10 @@ impl SettingsWidget for CustomAppIconWidget {
 
         let dropdown = render_dropdown_item(
             appearance,
-            "Customize your app icon",
-            show_bundle_warning.then_some("Changing the app icon requires the app to be bundled."),
+            &I18n::as_ref(_app).tr(I18nKey::SettingsAppearanceCustomizeAppIcon),
+            show_bundle_warning
+                .then(|| I18n::as_ref(_app).tr(I18nKey::SettingsAppearanceAppIconBundleWarning))
+                .as_deref(),
             None,
             LocalOnlyIconState::Hidden,
             None,
@@ -3396,7 +3464,7 @@ impl SettingsWidget for InputModeWidget {
     ) -> Box<dyn Element> {
         render_dropdown_item(
             appearance,
-            "Input position",
+            &I18n::as_ref(app).tr(I18nKey::SettingsAppearanceInputPosition),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -3807,6 +3875,7 @@ impl TerminalFontWidget {
         &self,
         view: &AppearanceSettingsPageView,
         appearance: &Appearance,
+        app: &AppContext,
         row: &mut Flex,
     ) {
         let mut line_height = Flex::column();
@@ -3880,7 +3949,7 @@ impl TerminalFontWidget {
                     font_size: Some(appearance.ui_font_size() * 0.8),
                     ..Default::default()
                 })
-                .with_text_label("Reset to default".to_string());
+                .with_text_label(I18n::as_ref(app).tr(I18nKey::CommonResetToDefault));
 
             button
                 .build()
@@ -3911,7 +3980,7 @@ impl SettingsWidget for TerminalFontWidget {
         // Terminal Font
         let mut terminal_font = Flex::column();
         terminal_font.add_child(render_body_item_label::<AppearancePageAction>(
-            "Terminal font".to_string(),
+            I18n::as_ref(app).tr(I18nKey::SettingsAppearanceTerminalFont),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -4049,7 +4118,7 @@ impl SettingsWidget for TerminalFontWidget {
                 .finish(),
         );
 
-        self.render_line_height_editor(view, appearance, &mut terminal_font_row);
+        self.render_line_height_editor(view, appearance, app, &mut terminal_font_row);
         terminal_font_row.finish()
     }
 }
@@ -4166,7 +4235,7 @@ impl SettingsWidget for ThinStrokesWidget {
     ) -> Box<dyn Element> {
         render_dropdown_item(
             appearance,
-            "Use thin strokes",
+            &I18n::as_ref(app).tr(I18nKey::SettingsAppearanceUseThinStrokes),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -4199,7 +4268,7 @@ impl SettingsWidget for MinimumContrastWidget {
     ) -> Box<dyn Element> {
         render_dropdown_item(
             appearance,
-            "Enforce minimum contrast",
+            &I18n::as_ref(app).tr(I18nKey::SettingsAppearanceEnforceMinimumContrast),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -4413,7 +4482,7 @@ impl SettingsWidget for TabCloseButtonPositionWidget {
     ) -> Box<dyn Element> {
         render_dropdown_item(
             appearance,
-            "Tab close button position",
+            &I18n::as_ref(app).tr(I18nKey::SettingsAppearanceTabCloseButtonPosition),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -4982,7 +5051,7 @@ impl SettingsWidget for ZenModeWidget {
     ) -> Box<dyn Element> {
         render_dropdown_item(
             appearance,
-            "Show the tab bar",
+            &I18n::as_ref(app).tr(I18nKey::SettingsAppearanceShowTabBar),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -5138,8 +5207,8 @@ impl SettingsWidget for ZoomLevelWidget {
 
         render_dropdown_item(
             appearance,
-            "Zoom",
-            Some("Adjusts the default zoom level across all windows"),
+            &I18n::as_ref(app).tr(I18nKey::SettingsAppearanceZoom),
+            Some(&I18n::as_ref(app).tr(I18nKey::SettingsAppearanceZoomDescription)),
             Some(reset_button),
             LocalOnlyIconState::for_setting(
                 crate::window_settings::ZoomLevel::storage_key(),
@@ -5149,6 +5218,35 @@ impl SettingsWidget for ZoomLevelWidget {
             ),
             None,
             &view.zoom_level_dropdown,
+        )
+    }
+}
+
+#[derive(Default)]
+struct LanguageWidget;
+
+impl SettingsWidget for LanguageWidget {
+    type View = AppearanceSettingsPageView;
+
+    fn search_terms(&self) -> &str {
+        "language display locale localization chinese english 语言 显示 本地化 中文 英文"
+    }
+
+    fn render(
+        &self,
+        view: &Self::View,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        let i18n = I18n::as_ref(app);
+        render_dropdown_item(
+            appearance,
+            &i18n.tr(I18nKey::SettingsAppearanceLanguageLabel),
+            Some(&i18n.tr(I18nKey::SettingsAppearanceLanguageDescription)),
+            None,
+            LocalOnlyIconState::Hidden,
+            None,
+            &view.language_dropdown,
         )
     }
 }
