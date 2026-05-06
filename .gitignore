@@ -61,3 +61,6 @@ __pycache__/
 
 # Project notes
 .note/
+
+# Codex worktrees
+.worktrees/
