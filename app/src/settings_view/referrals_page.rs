@@ -16,6 +16,7 @@ use crate::{
     appearance::Appearance,
     auth::AuthStateProvider,
     editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions},
+    i18n::{I18n, I18nKey},
     safe_info, send_telemetry_from_ctx,
     server::{
         server_api::referral::{ReferralInfo, ReferralsClient},
@@ -50,22 +51,12 @@ const INVITE_FIELD_LABEL_BOTTOM_MARGIN: f32 = 8.;
 const LINK_BOTTOM_MARGIN: f32 = 12.;
 const LINK_TEXT_PADDING: f32 = 10.;
 const LINK_CORNER_RADIUS: Radius = Radius::Pixels(4.);
-const LINK_ERROR_TEXT: &str = "Failed to load referral code.";
 
 const BUTTON_WIDTH: f32 = 98.;
 const BUTTON_HEIGHT: f32 = 36.;
 const BUTTON_LEFT_MARGIN: f32 = 8.;
 const BUTTON_FONT_SIZE: f32 = 12.;
-const LINK_BUTTON_TEXT: &str = "Copy link";
-const EMAIL_BUTTON_TEXT: &str = "Send";
-const EMAIL_BUTTON_SENDING_TEXT: &str = "Sending...";
-const LOADING_TEXT: &str = "Loading...";
 
-const LINK_COPIED_TOAST: &str = "Link copied.";
-const EMAIL_SUCCESS_TOAST: &str = "Successfully sent emails.";
-const EMAIL_FAILURE_TOAST: &str = "Failed to send emails. Please try again.";
-
-const REWARD_INTRO: &str = "Get exclusive Warp goodies when you refer someone*";
 const REWARD_INTRO_FONT_SIZE: f32 = 14.;
 const REWARD_SECTION_VERTICAL_SPACING: f32 = 24.;
 
@@ -87,8 +78,6 @@ const METER_TOP_MARGIN: f32 = 16.;
 const METER_RIGHT_MARGIN: f32 = 12.;
 
 const CLAIMED_REFERRALS_LABEL_HORIZONTAL_SPACING: f32 = 4.;
-const CLAIMED_REFERRALS_COUNT_LABEL_SINGULAR: &str = "Current referral";
-const CLAIMED_REFERRALS_COUNT_LABEL_PLURAL: &str = "Current referrals";
 const CLAIMED_REFERRALS_LABEL_WIDTH: f32 = 52.;
 const CLAIMED_REFERRALS_LABEL_FONT_SIZE: f32 = 14.;
 const CLAIMED_REFERRALS_COUNT_FONT_SIZE: f32 = 48.;
@@ -96,7 +85,6 @@ const CLAIMED_REFERRAL_COUNT_LEFT_MARGIN: f32 = 40.;
 
 const CLAIMED_REFERRAL_CLIP: usize = 999;
 
-const TERMS_LINK_TEXT: &str = "Certain restrictions apply.";
 const TERMS_URL: &str =
     "https://docs.warp.dev/support-and-community/community/refer-a-friend#referral-program-terms-and-conditions";
 const TERMS_CONTACT_TEXT: &str =
@@ -287,7 +275,7 @@ impl ReferralsPageView {
                 ctx.clipboard()
                     .write(ClipboardContent::plain_text(referral_info.url.to_string()));
                 ctx.emit(ReferralsPageEvent::ShowToast {
-                    message: LINK_COPIED_TOAST.to_owned(),
+                    message: I18n::as_ref(ctx).tr(I18nKey::ReferralsLinkCopied),
                     flavor: ToastFlavor::Default,
                 });
             }
@@ -340,14 +328,14 @@ impl ReferralsPageView {
                     full: ("Successfully sent invites to: {:?}", successful)
                 );
                 ctx.emit(ReferralsPageEvent::ShowToast {
-                    message: EMAIL_SUCCESS_TOAST.to_owned(),
+                    message: I18n::as_ref(ctx).tr(I18nKey::ReferralsSuccessfullySentEmails),
                     flavor: ToastFlavor::Success,
                 });
             }
             Err(err) => {
                 log::error!("Error sending referral emails: {err}");
                 ctx.emit(ReferralsPageEvent::ShowToast {
-                    message: EMAIL_FAILURE_TOAST.to_owned(),
+                    message: I18n::as_ref(ctx).tr(I18nKey::ReferralsFailedSendEmails),
                     flavor: ToastFlavor::Error,
                 });
             }
@@ -502,7 +490,7 @@ impl ReferralsWidget {
         let invite_or_signup_section = if is_anonymous {
             self.render_signup_section(appearance)
         } else {
-            self.render_send_invite_section(view, appearance)
+            self.render_send_invite_section(view, appearance, app)
         };
 
         Flex::column()
@@ -512,7 +500,7 @@ impl ReferralsWidget {
                     .finish(),
             )
             .with_child(
-                Container::new(self.render_rewards_section(is_anonymous, view, appearance))
+                Container::new(self.render_rewards_section(is_anonymous, view, appearance, app))
                     .with_padding_bottom(PAGE_PADDING)
                     .finish(),
             )
@@ -523,11 +511,12 @@ impl ReferralsWidget {
         &self,
         view: &ReferralsPageView,
         appearance: &Appearance,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         let (link_text, button_enabled) = match &view.api_state {
             ApiState::Ready { referral_info, .. } => (referral_info.url.clone(), true),
-            ApiState::Loading => (LOADING_TEXT.into(), false),
-            ApiState::Failed => (LINK_ERROR_TEXT.into(), false),
+            ApiState::Loading => (I18n::as_ref(app).tr(I18nKey::CommonLoading), false),
+            ApiState::Failed => (I18n::as_ref(app).tr(I18nKey::ReferralsFailedLoadReferralCode), false),
         };
         let theme = appearance.theme();
 
@@ -563,7 +552,7 @@ impl ReferralsWidget {
                 )
                 .with_child(self.render_button(
                     button_enabled,
-                    LINK_BUTTON_TEXT,
+                    &I18n::as_ref(app).tr(I18nKey::ReferralsCopyLink),
                     self.copy_link_mouse_state.clone(),
                     |ctx, _, _| ctx.dispatch_typed_action(ReferralsPageAction::CopyLink),
                     appearance,
@@ -579,17 +568,18 @@ impl ReferralsWidget {
         &self,
         view: &ReferralsPageView,
         appearance: &Appearance,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         let (button_text, button_enabled) = match &view.api_state {
             ApiState::Ready {
                 email_state: SendEmailState::Idle,
                 ..
-            } => (EMAIL_BUTTON_TEXT, true),
+            } => (I18n::as_ref(app).tr(I18nKey::CommonSend), true),
             ApiState::Ready {
                 email_state: SendEmailState::Sending,
                 ..
-            } => (EMAIL_BUTTON_SENDING_TEXT, false),
-            _ => (EMAIL_BUTTON_TEXT, false),
+            } => (I18n::as_ref(app).tr(I18nKey::CommonSending), false),
+            _ => (I18n::as_ref(app).tr(I18nKey::CommonSend), false),
         };
 
         Flex::row()
@@ -611,7 +601,7 @@ impl ReferralsWidget {
             )
             .with_child(self.render_button(
                 button_enabled,
-                button_text,
+                &button_text,
                 self.send_email_mouse_state.clone(),
                 |ctx, _, _| ctx.dispatch_typed_action(ReferralsPageAction::SendEmailInvite),
                 appearance,
@@ -623,6 +613,7 @@ impl ReferralsWidget {
         &self,
         view: &ReferralsPageView,
         appearance: &Appearance,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         Flex::column()
             .with_child(
@@ -630,9 +621,9 @@ impl ReferralsWidget {
                     .with_padding_top(PAGE_PADDING)
                     .finish(),
             )
-            .with_child(self.render_link_row(view, appearance))
+            .with_child(self.render_link_row(view, appearance, app))
             .with_child(self.render_label("Email", appearance))
-            .with_child(self.render_email_row(view, appearance))
+            .with_child(self.render_email_row(view, appearance, app))
             .finish()
     }
 
@@ -734,6 +725,7 @@ impl ReferralsWidget {
         is_anonymous: bool,
         view: &ReferralsPageView,
         appearance: &Appearance,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         let mut rewards_section = Flex::column();
 
@@ -741,7 +733,7 @@ impl ReferralsWidget {
             Container::new(
                 appearance
                     .ui_builder()
-                    .span(REWARD_INTRO)
+                    .span(I18n::as_ref(app).tr(I18nKey::SettingsReferralsRewardIntro))
                     .with_style(UiComponentStyles {
                         font_size: Some(REWARD_INTRO_FONT_SIZE),
                         ..Default::default()
@@ -764,7 +756,7 @@ impl ReferralsWidget {
             .with_child(self.render_rewards_list(view, appearance));
 
         if !is_anonymous {
-            if let Some(count) = self.render_claimed_referrals_count(view, appearance) {
+            if let Some(count) = self.render_claimed_referrals_count(view, appearance, app) {
                 reward_status_row.add_child(
                     Container::new(count)
                         .with_margin_left(CLAIMED_REFERRAL_COUNT_LEFT_MARGIN)
@@ -781,7 +773,7 @@ impl ReferralsWidget {
                     FormattedTextElement::new(
                         FormattedText::new([FormattedTextLine::Line(vec![
                             FormattedTextFragment::plain_text("*"),
-                            FormattedTextFragment::hyperlink(TERMS_LINK_TEXT, TERMS_URL),
+                            FormattedTextFragment::hyperlink(&I18n::as_ref(app).tr(I18nKey::ReferralsCertainRestrictionsApply), TERMS_URL),
                             FormattedTextFragment::plain_text(TERMS_CONTACT_TEXT),
                         ])]),
                         12.,
@@ -1054,6 +1046,7 @@ impl ReferralsWidget {
         &self,
         view: &ReferralsPageView,
         appearance: &Appearance,
+        app: &AppContext,
     ) -> Option<Box<dyn Element>> {
         let claimed_count = view.referral_claimed_count()?;
 
@@ -1064,8 +1057,8 @@ impl ReferralsWidget {
         };
 
         let current_referrals_label = match claimed_count {
-            1 => CLAIMED_REFERRALS_COUNT_LABEL_SINGULAR,
-            _ => CLAIMED_REFERRALS_COUNT_LABEL_PLURAL,
+            1 => I18n::as_ref(app).tr(I18nKey::ReferralsCurrentReferral),
+            _ => I18n::as_ref(app).tr(I18nKey::ReferralsCurrentReferrals),
         };
 
         Some(

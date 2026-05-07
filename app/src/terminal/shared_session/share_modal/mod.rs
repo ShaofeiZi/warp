@@ -1,3 +1,4 @@
+use crate::i18n::{I18n, I18nKey};
 use crate::modal::Modal;
 
 use crate::modal::ModalEvent;
@@ -32,7 +33,6 @@ use self::body::BodyEvent;
 
 use super::{SharedSessionActionSource, SharedSessionScrollbackType};
 
-const MODAL_HEADER: &str = "Share session";
 const SESSION_LIMIT_REACHED_HEADER: &str = "Shared session limit reached";
 
 pub struct ShareSessionModal {
@@ -77,7 +77,11 @@ impl ShareSessionModal {
         });
 
         let modal = ctx.add_typed_action_view(|ctx| {
-            Modal::new(Some(MODAL_HEADER.to_string()), body, ctx)
+            Modal::new(
+                Some(I18n::as_ref(ctx).tr(I18nKey::CommonShareSession)),
+                body,
+                ctx,
+            )
                 .with_modal_style(UiComponentStyles {
                     width: Some(MODAL_WIDTH),
                     height: Some(MODAL_HEIGHT),

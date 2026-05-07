@@ -23,6 +23,7 @@ use pathfinder_color::ColorU;
 use warp_core::ui::theme::{phenomenon::PhenomenonStyle, Fill};
 
 use crate::appearance::Appearance;
+use crate::i18n::{I18n, I18nKey};
 use crate::settings::AISettings;
 use crate::tab_configs::session_config::{is_git_repo, SessionConfigSelection, SessionType};
 use crate::tab_configs::session_config_rendering;
@@ -456,7 +457,7 @@ impl HoaOnboardingFlow {
         )
     }
 
-    fn render_inbox_callout(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_inbox_callout(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let title = Text::new(
             "Meet your new agent inbox",
             appearance.ui_font_family(),
@@ -468,7 +469,7 @@ impl HoaOnboardingFlow {
 
         // Build the description with an inline "Learn more" hyperlink.
         let learn_more_fragment = FormattedTextFragment {
-            text: "Learn more".into(),
+            text: I18n::as_ref(app).tr(I18nKey::CommonLearnMore).into(),
             styles: FormattedTextStyles {
                 underline: true,
                 hyperlink: Some(Hyperlink::Url(
@@ -612,7 +613,7 @@ impl View for HoaOnboardingFlow {
                 )
             }
             HoaOnboardingStep::AgentInboxCallout => {
-                let content = self.render_inbox_callout(appearance);
+                let content = self.render_inbox_callout(appearance, app);
                 render_callout_bubble(
                     content,
                     &CalloutBubbleConfig {

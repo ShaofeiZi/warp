@@ -245,8 +245,9 @@ impl ConversationEndedTombstoneView {
         // offer to open the conversation in warp (where you can continue locally).
         #[cfg(target_family = "wasm")]
         let open_in_warp_button = conversation_id.map(|conv_id| {
+            let open_in_warp_text = I18n::as_ref(ctx).tr(I18nKey::CommonOpenInWarp);
             ctx.add_typed_action_view(move |_| {
-                ActionButton::new("Open in Warp", PrimaryTheme)
+                ActionButton::new(open_in_warp_text, PrimaryTheme)
                     .with_tooltip("Open this conversation in the Warp desktop app")
                     .on_click(move |ctx| {
                         ctx.dispatch_typed_action(ConversationEndedTombstoneAction::OpenInWarp(

@@ -18,6 +18,7 @@ use warpui::{
 
 use crate::code_review::diff_state::GitDeltaPreference;
 use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
+use crate::i18n::{I18n, I18nKey};
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::{
     pane::view, BackingView, NewTerminalOptions, PaneConfiguration, PaneEvent, PanesLayout,
@@ -71,7 +72,7 @@ pub struct WelcomeView {
 
 impl WelcomeView {
     pub fn new(startup_directory: Option<PathBuf>, ctx: &mut ViewContext<Self>) -> Self {
-        let pane_configuration = ctx.add_model(|_ctx| PaneConfiguration::new("New tab"));
+        let pane_configuration = ctx.add_model(|_ctx| PaneConfiguration::new(I18n::as_ref(_ctx).tr(I18nKey::CommonNewTab)));
         let window_id = ctx.window_id();
         let view_id = ctx.view_id();
         let palette = ctx.add_typed_action_view(|ctx| {
@@ -290,7 +291,7 @@ impl BackingView for WelcomeView {
         _ctx: &view::HeaderRenderContext<'_>,
         _app: &AppContext,
     ) -> view::HeaderContent {
-        view::HeaderContent::simple("New tab")
+        view::HeaderContent::simple(I18n::as_ref(_app).tr(I18nKey::CommonNewTab))
     }
 
     fn set_focus_handle(&mut self, focus_handle: PaneFocusHandle, _ctx: &mut ViewContext<Self>) {

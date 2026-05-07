@@ -1,4 +1,5 @@
 use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
+use crate::i18n::{I18n, I18nKey};
 use crate::ai::agent::api::ServerConversationToken;
 use crate::ai::agent::conversation::{AIAgentHarness, AIConversation, AIConversationId};
 use crate::ai::agent_conversations_model::{
@@ -2934,13 +2935,14 @@ impl PaneGroup {
             ctx.notify();
         });
 
+        let learn_more_text = I18n::as_ref(ctx).tr(I18nKey::CommonLearnMore);
         let user_default_shell_changed_banner = ctx.add_typed_action_view(|_| {
             Banner::<PaneGroupAction>::new_permanently_dismissible(
                 BannerTextContent::formatted_text(vec![
                     FormattedTextFragment::plain_text(
                         "Warp doesn't currently support your default shell, falling back to zsh.  ",
                     ),
-                    FormattedTextFragment::hyperlink("Learn more", WARP_SHELL_COMPATIBILITY_DOCS),
+                    FormattedTextFragment::hyperlink(learn_more_text, WARP_SHELL_COMPATIBILITY_DOCS),
                 ]),
             )
         });

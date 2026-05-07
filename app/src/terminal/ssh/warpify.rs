@@ -4,6 +4,7 @@ use warp_core::ui::theme::WarpTheme;
 use warpui::assets::asset_cache::{AssetCache, AssetState};
 
 use crate::ai::blocklist::inline_action::requested_action::RenderableAction;
+use crate::i18n::{I18n, I18nKey};
 use crate::appearance::Appearance;
 use crate::terminal::shell::ShellType;
 use crate::terminal::warpify;
@@ -82,7 +83,7 @@ pub fn warpify_description(
         FormattedTextFragment::plain_text(
             "Bring Warp's features to your remote session. Blocks, full text editing, auto-complete, Oz, and more. "
         ),
-        FormattedTextFragment::hyperlink("Learn more", SSH_DOCS_URL),
+        FormattedTextFragment::hyperlink(I18n::as_ref(app).tr(I18nKey::CommonLearnMore), SSH_DOCS_URL),
     ])]);
     warpify::render::build_description_row(description, theme, appearance, hyperlink_index.clone())
         .with_hyperlink_font_color(appearance.theme().accent().into_solid())

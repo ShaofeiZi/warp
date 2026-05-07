@@ -34,6 +34,7 @@ use crate::pane_group::TabBarHoverIndex;
 use crate::server::telemetry::AgentModeEntrypoint;
 use crate::server::telemetry::PaletteSource;
 use crate::settings::AISettings;
+use crate::i18n::{I18n, I18nKey};
 use crate::settings_view::{self, flags, SettingsSection};
 use crate::tab::uses_vertical_tabs;
 use crate::tab_configs;
@@ -1345,7 +1346,7 @@ fn add_open_setting_pages_as_editable_binding(app: &mut AppContext) {
         EditableBinding::new(
             "workspace:show_settings",
             BindingDescription::new("Open Settings")
-                .with_custom_description(bindings::MAC_MENUS_CONTEXT, "Settings"),
+                .with_custom_description(bindings::MAC_MENUS_CONTEXT, I18n::as_ref(app).tr(I18nKey::CommonSettings)),
             WorkspaceAction::ShowSettings,
         )
         .with_context_predicate(id!("Workspace"))

@@ -1,4 +1,5 @@
 use crate::appearance::Appearance;
+use crate::i18n::{I18n, I18nKey};
 use crate::report_if_error;
 use crate::settings::app_installation_detection::{
     UserAppInstallDetectionSettings, UserAppInstallStatus,
@@ -159,7 +160,7 @@ impl View for WasmNUXDialog {
                 dialog_styles,
             )
             .with_bottom_row_child(Self::render_dialog_button(
-                "Open in Warp",
+                I18n::as_ref(ctx).tr(I18nKey::CommonOpenInWarp),
                 WasmNUXDialogAction::OpenNativeAndClose,
                 &self.confirm_mouse_state,
                 appearance,
@@ -193,7 +194,7 @@ impl View for WasmNUXDialog {
                                 appearance
                                     .ui_builder()
                                     .link(
-                                        "Learn more".to_string(),
+                                        I18n::as_ref(ctx).tr(I18nKey::CommonLearnMore),
                                         None,
                                         Some(Box::new(|ctx| {
                                             ctx.dispatch_typed_action(

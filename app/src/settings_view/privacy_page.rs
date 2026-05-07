@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use std::sync::LazyLock;
 use std::time::Duration;
 
 use pathfinder_geometry::vector::vec2f;
@@ -45,6 +44,7 @@ use crate::{
     appearance::Appearance,
     auth::auth_manager::AuthManager,
     channel::ChannelState,
+    i18n::{I18n, I18nKey},
     report_if_error, send_telemetry_from_ctx,
     server::telemetry::TelemetryEvent,
     settings::{AISettings, PrivacySettings},
@@ -73,13 +73,6 @@ use warpui::fonts::Weight;
 
 const FONT_SIZE: f32 = 12.;
 
-const SAFE_MODE_TITLE: &str = "Secret redaction";
-static SAFE_MODE_DESCRIPTION: LazyLock<&'static str> = LazyLock::new(|| {
-    "When this setting is enabled, Warp will scan blocks, the contents of \
-        Warp Drive objects, and Oz prompts for potential sensitive \
-        information and prevent saving or sending this data to any \
-        servers. You can customize this list via regexes."
-});
 const USER_SECRET_REGEX_TITLE: &str = "Custom secret redaction";
 const USER_SECRET_REGEX_DESCRIPTION: &str =
     "Use regex to define additional secrets or data you'd like to redact. This will take effect \
@@ -88,23 +81,11 @@ const USER_SECRET_REGEX_DESCRIPTION: &str =
 const TELEMETRY_DESCRIPTION_OLD: &str =
     "App analytics help us make the product better for you. We only collect \
     app usage metadata, never console input or output.";
-const TELEMETRY_TITLE: &str = "Help improve Warp";
 const TELEMETRY_DESCRIPTION: &str =
     "App analytics help us make the product better for you. We may collect \
     certain console interactions to improve Warp's AI capabilities.";
-const TELEMETRY_FREE_TIER_NOTE: &str =
-    "On the free tier, analytics must be enabled to use AI features.";
 const TELEMETRY_DOCS_URL: &str =
     "https://docs.warp.dev/support-and-community/privacy-and-security/privacy#what-telemetry-data-does-warp-collect-and-why";
-
-const DATA_MANAGEMENT_TITLE: &str = "Manage your data";
-const DATA_MANAGEMENT_DESCRIPTION: &str =
-    "At any time, you may choose to delete your Warp account permanently. \
-    You will no longer be able to use Warp.";
-const DATA_MANAGEMENT_LINK_TEXT: &str = "Visit the data management page";
-
-const PRIVACY_POLICY_TITLE: &str = "Privacy policy";
-const PRIVACY_POLICY_LINK_TEXT: &str = "Read Warp's privacy policy";
 
 pub fn data_management_url(custom_token: Option<&str>) -> String {
     match custom_token {
@@ -248,7 +229,7 @@ impl PrivacyPageView {
         }
         widgets.push(Box::new(DataManagementWidget::default()));
         widgets.push(Box::new(PrivacyPolicyWidget::default()));
-        PageType::new_uncategorized(widgets, Some("Privacy"))
+        PageType::new_uncategorized_i18n(widgets, I18nKey::SettingsSectionPrivacy)
     }
 
     fn update_button_states(
@@ -1186,7 +1167,11 @@ impl SettingsWidget for SecretRedactionWidget {
                 .with_child(
                     Shrinkable::new(
                         1.0,
-                        render_sub_header(appearance, SAFE_MODE_TITLE, Some(local_only_icon_state)),
+                        render_sub_header(
+                            appearance,
+                            I18n::as_ref(app).tr(I18nKey::SettingsPrivacySecretRedaction),
+                            Some(local_only_icon_state),
+                        ),
                     )
                     .finish(),
                 )
@@ -1221,7 +1206,9 @@ impl SettingsWidget for SecretRedactionWidget {
             .with_child(secret_redaction_title_row)
             .with_child(
                 ui_builder
-                    .paragraph((*SAFE_MODE_DESCRIPTION).to_owned())
+                    .paragraph(
+                        I18n::as_ref(app).tr(I18nKey::SettingsPrivacySecretRedactionDescription),
+                    )
                     .with_style(UiComponentStyles {
                         font_color: Some(description_text_color),
                         font_size: Some(FONT_SIZE + 1.), // One size up from current 12px to 13px
@@ -1488,7 +1475,7 @@ impl SettingsWidget for AppAnalyticsWidget {
             Flex::row()
                 .with_cross_axis_alignment(CrossAxisAlignment::Center)
                 .with_child(render_body_item_label::<PrivacyPageAction>(
-                    TELEMETRY_TITLE.into(),
+                    I18n::as_ref(app).tr(I18nKey::SettingsPrivacyHelpImproveWarp),
                     None,
                     None,
                     LocalOnlyIconState::Hidden,
@@ -1499,7 +1486,7 @@ impl SettingsWidget for AppAnalyticsWidget {
                 .finish()
         } else {
             render_body_item_label::<PrivacyPageAction>(
-                TELEMETRY_TITLE.into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsPrivacyHelpImproveWarp),
                 None,
                 None,
                 LocalOnlyIconState::Hidden,
@@ -1563,7 +1550,7 @@ impl SettingsWidget for AppAnalyticsWidget {
         if !is_on_paid_plan {
             column.add_child(
                 ui_builder
-                    .paragraph(TELEMETRY_FREE_TIER_NOTE)
+                    .paragraph(I18n::as_ref(app).tr(I18nKey::SettingsPrivacyTelemetryFreeTierNote))
                     .with_style(UiComponentStyles {
                         font_color: Some(description_text_color),
                         margin: Some(
@@ -1580,7 +1567,7 @@ impl SettingsWidget for AppAnalyticsWidget {
             Align::new(
                 ui_builder
                     .link(
-                        "Read more about Warp's use of data".into(),
+                        I18n::as_ref(app).tr(I18nKey::SettingsPrivacyReadMoreDataUse),
                         Some(TELEMETRY_DOCS_URL.into()),
                         None,
                         self.docs_link_mouse_state.clone(),
@@ -1630,7 +1617,7 @@ impl SettingsWidget for CrashReportsWidget {
         let privacy_settings = PrivacySettings::as_ref(app);
         Flex::column()
             .with_child(render_body_item::<PrivacyPageAction>(
-                "Send crash reports".into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsPrivacySendCrashReports),
                 None,
                 // Crash report state is always synced to cloud, so no need to show local only icon.
                 LocalOnlyIconState::Hidden,
@@ -1649,8 +1636,7 @@ impl SettingsWidget for CrashReportsWidget {
             .with_child(
                 ui_builder
                     .paragraph(
-                        "Crash reports assist with debugging and stability improvements."
-                            .to_owned(),
+                        I18n::as_ref(app).tr(I18nKey::SettingsPrivacyCrashReportsDescription),
                     )
                     .with_style(UiComponentStyles {
                         font_color: Some(
@@ -1744,7 +1730,7 @@ impl SettingsWidget for CloudConversationStorageWidget {
 
         Flex::column()
             .with_child(render_body_item::<PrivacyPageAction>(
-                "Store AI conversations in the cloud".into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsPrivacyStoreAiConversationsCloud),
                 None,
                 LocalOnlyIconState::Hidden,
                 toggle_state,
@@ -1803,12 +1789,12 @@ impl SettingsWidget for NetworkLogWidget {
         &self,
         _view: &Self::View,
         appearance: &Appearance,
-        _app: &AppContext,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         Flex::column()
             .with_child(render_body_item::<PrivacyPageAction>(
-                "Network log console".into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsPrivacyNetworkLogConsole),
                 None,
                 // Not rendering a setting, so no need to show local only icon state.
                 LocalOnlyIconState::Hidden,
@@ -1846,7 +1832,7 @@ impl SettingsWidget for NetworkLogWidget {
                 Align::new(
                     ui_builder
                         .link(
-                            "View network logging".to_owned(),
+                            I18n::as_ref(app).tr(I18nKey::SettingsPrivacyViewNetworkLogging),
                             None,
                             Some(Box::new(|ctx| {
                                 ctx.dispatch_typed_action(PrivacyPageAction::LaunchNetworkLogging);
@@ -1881,12 +1867,12 @@ impl SettingsWidget for DataManagementWidget {
         &self,
         _view: &Self::View,
         appearance: &Appearance,
-        _app: &AppContext,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         Flex::column()
             .with_child(render_body_item::<PrivacyPageAction>(
-                DATA_MANAGEMENT_TITLE.into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsPrivacyManageData),
                 None,
                 // Not rendering a setting, so no need to show local only icon state.
                 LocalOnlyIconState::Hidden,
@@ -1897,7 +1883,7 @@ impl SettingsWidget for DataManagementWidget {
             ))
             .with_child(
                 ui_builder
-                    .paragraph(DATA_MANAGEMENT_DESCRIPTION)
+                    .paragraph(I18n::as_ref(app).tr(I18nKey::SettingsPrivacyManageDataDescription))
                     .with_style(UiComponentStyles {
                         font_color: Some(
                             appearance
@@ -1920,7 +1906,7 @@ impl SettingsWidget for DataManagementWidget {
                     appearance
                         .ui_builder()
                         .link(
-                            DATA_MANAGEMENT_LINK_TEXT.into(),
+                            I18n::as_ref(app).tr(I18nKey::SettingsPrivacyDataManagementLink),
                             None,
                             Some(Box::new(|ctx| {
                                 ctx.dispatch_typed_action(
@@ -1957,11 +1943,11 @@ impl SettingsWidget for PrivacyPolicyWidget {
         &self,
         _view: &Self::View,
         appearance: &Appearance,
-        _app: &AppContext,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         Flex::column()
             .with_child(render_body_item::<PrivacyPageAction>(
-                PRIVACY_POLICY_TITLE.into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsPrivacyPolicy),
                 None,
                 // Not rendering a setting, so no need to show local only icon state.
                 LocalOnlyIconState::Hidden,
@@ -1975,7 +1961,7 @@ impl SettingsWidget for PrivacyPolicyWidget {
                     appearance
                         .ui_builder()
                         .link(
-                            PRIVACY_POLICY_LINK_TEXT.into(),
+                            I18n::as_ref(app).tr(I18nKey::SettingsPrivacyPolicyLink),
                             Some(PRIVACY_POLICY_URL.into()),
                             None,
                             self.link_mouse_state.clone(),

@@ -82,17 +82,12 @@ fn handlebars_placeholder(name: &str) -> String {
 
 /// Derives a human-readable config name from the directory and worktree setting.
 /// e.g. "Worktree: my-repo" or "New tab: my-repo".
-fn config_name(directory: &Path, enable_worktree: bool) -> String {
+fn config_name(directory: &Path, prefix: &str) -> String {
     let repo = directory
         .file_name()
         .and_then(|n| n.to_str())
         .or_else(|| directory.to_str())
         .unwrap_or("untitled");
-    let prefix = if enable_worktree {
-        "Worktree"
-    } else {
-        "New tab"
-    };
     format!("{prefix}: {repo}")
 }
 
@@ -106,6 +101,7 @@ pub fn build_tab_config(
     directory: &Path,
     enable_worktree: bool,
     autogenerate_worktree_branch_name: bool,
+    name_prefix: &str,
 ) -> TabConfig {
     let mut commands: Vec<String> = Vec::new();
     let mut params = HashMap::new();
@@ -150,7 +146,7 @@ pub fn build_tab_config(
     };
 
     TabConfig {
-        name: config_name(directory, enable_worktree),
+        name: config_name(directory, name_prefix),
         title,
         color: None,
         panes: vec![TabConfigPaneNode {

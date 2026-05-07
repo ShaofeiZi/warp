@@ -4,6 +4,7 @@ use super::{
 };
 
 use crate::ai::predict::prompt_suggestions::ACCEPT_PROMPT_SUGGESTION_KEYBINDING;
+use crate::i18n::{I18n, I18nKey};
 use crate::server::telemetry::ToggleBlockFilterSource;
 
 use crate::server::telemetry::InteractionSource;
@@ -39,6 +40,7 @@ use warpui::{
     keymap::{EditableBinding, FixedBinding},
     units::IntoLines,
     AppContext,
+    SingletonEntity,
 };
 
 pub const TOGGLE_BLOCK_FILTER_KEYBINDING: &str =
@@ -974,7 +976,7 @@ pub fn init(app: &mut AppContext) {
         }),
         EditableBinding::new(
             "terminal:stop_sharing_current_session",
-            "Stop sharing current session",
+            I18n::as_ref(app).tr(I18nKey::CommonStopSharingCurrentSession),
             TerminalAction::StopSharingCurrentSession {
                 source: SharedSessionActionSource::CommandPalette,
             },
@@ -986,7 +988,7 @@ pub fn init(app: &mut AppContext) {
 
     app.register_editable_bindings([EditableBinding::new(
         TOGGLE_BLOCK_FILTER_KEYBINDING,
-        "Toggle block filter on selected or last block",
+        I18n::as_ref(app).tr(I18nKey::CommonToggleBlockFilterSelected),
         TerminalAction::ToggleBlockFilterOnSelectedOrLastBlock(ToggleBlockFilterSource::Binding),
     )
     .with_mac_key_binding("shift-alt-F")
@@ -994,7 +996,7 @@ pub fn init(app: &mut AppContext) {
 
     app.register_editable_bindings([EditableBinding::new(
         "terminal:toggle_snackbar_in_active_pane",
-        "Toggle Sticky Command Header in Active Pane",
+        I18n::as_ref(app).tr(I18nKey::CommonToggleStickyCommandHeader),
         TerminalAction::ToggleSnackbarInActivePane,
     )
     .with_context_predicate(id!("Terminal"))]);

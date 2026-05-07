@@ -8,6 +8,7 @@ use super::{
 use crate::auth::AuthStateProvider;
 use crate::{
     appearance::Appearance,
+    i18n::{I18n, I18nKey},
     channel::{Channel, ChannelState},
     menu::{Event as MenuEvent, Event, Menu, MenuItem, MenuItemFields},
     server::{block::Block, server_api::block::BlockClient},
@@ -144,14 +145,14 @@ impl UserOwnedBlock {
         .finish()
     }
 
-    fn copy_link_button(&self, appearance: &Appearance, block_url: String) -> Box<dyn Element> {
+    fn copy_link_button(&self, appearance: &Appearance, app: &AppContext, block_url: String) -> Box<dyn Element> {
         let button = appearance
             .ui_builder()
             .button(
                 ButtonVariant::Basic,
                 self.copy_button_mouse_state_handle.clone(),
             )
-            .with_text_label("Copy link".into());
+            .with_text_label(I18n::as_ref(app).tr(I18nKey::CommonCopyLink));
 
         let button = if self.unshare_request_status == UnshareBlockRequestState::InFlight {
             button.disabled().build()
@@ -192,7 +193,7 @@ impl UserOwnedBlock {
         }
     }
 
-    fn render(&self, appearance: &Appearance, index: usize) -> Box<dyn Element> {
+    fn render(&self, appearance: &Appearance, app: &AppContext, index: usize) -> Box<dyn Element> {
         let block_url = self.block_url();
         let command = appearance
             .ui_builder()
@@ -229,7 +230,7 @@ impl UserOwnedBlock {
                     Shrinkable::new(
                         0.3,
                         Container::new(
-                            Align::new(self.copy_link_button(appearance, block_url))
+                            Align::new(self.copy_link_button(appearance, app, block_url))
                                 .right()
                                 .finish(),
                         )
@@ -336,7 +337,7 @@ impl GetBlocksForUserRequestState {
                                 .enumerate()
                                 .map(|(visible_index, (index, user_block))| {
                                     let user_block_element =
-                                        Container::new(user_block.render(appearance, index))
+                                        Container::new(user_block.render(appearance, app, index))
                                             .with_uniform_padding(10.);
 
                                     // Add a background on alternating blocks.

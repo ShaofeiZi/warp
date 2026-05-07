@@ -30,6 +30,7 @@ use crate::{
         CloudActionConfirmationDialogVariant,
     },
     editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions},
+    i18n::{I18n, I18nKey},
     network::NetworkStatus,
     send_telemetry_from_ctx,
     server::{
@@ -3653,10 +3654,15 @@ impl TeamsWidget {
         let mut page = Flex::column();
 
         // Title, subtitle, and description
-        page.add_child(render_sub_header(appearance, "Teams".to_string(), None));
-        page.add_child(
-            self.render_sub_header_with_subtext_color(appearance, "Create a team".to_string()),
-        );
+        page.add_child(render_sub_header(
+            appearance,
+            I18n::as_ref(app).tr(I18nKey::SettingsTeamsTitle),
+            None,
+        ));
+        page.add_child(self.render_sub_header_with_subtext_color(
+            appearance,
+            I18n::as_ref(app).tr(I18nKey::SettingsTeamsCreateTeam),
+        ));
         page.add_child(
             Container::new(
                 self.render_description(CREATE_TEAM_DESCRIPTION.to_string(), appearance),

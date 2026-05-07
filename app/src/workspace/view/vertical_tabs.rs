@@ -16,6 +16,7 @@ use crate::workspace::view::vertical_tabs::telemetry::{
     VerticalTabsChipEntrypoint, VerticalTabsTelemetryEvent,
 };
 use crate::FeatureFlag;
+use crate::i18n::{I18n, I18nKey};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -2555,21 +2556,21 @@ impl TypedPane<'_> {
         matches!(self, TypedPane::Terminal(_) | TypedPane::Code(_))
             || self.warp_drive_object_type().is_some()
     }
-    fn kind_label(&self) -> &'static str {
+    fn kind_label(&self, app: &AppContext) -> String {
         match self {
-            TypedPane::Terminal(_) => "Terminal",
-            TypedPane::Code(_) => "Code",
-            TypedPane::CodeDiff => "Code Diff",
-            TypedPane::File => "File",
-            TypedPane::Notebook { .. } => "Notebook",
-            TypedPane::Workflow { .. } => "Workflow",
-            TypedPane::Settings => "Settings",
-            TypedPane::EnvVarCollection => "Environment Variables",
-            TypedPane::EnvironmentManagement => "Environments",
-            TypedPane::AIFact => "Rules",
-            TypedPane::AIDocument => "Plan",
-            TypedPane::ExecutionProfileEditor => "Execution Profile",
-            TypedPane::Other => "Other",
+            TypedPane::Terminal(_) => "Terminal".to_string(),
+            TypedPane::Code(_) => "Code".to_string(),
+            TypedPane::CodeDiff => "Code Diff".to_string(),
+            TypedPane::File => "File".to_string(),
+            TypedPane::Notebook { .. } => "Notebook".to_string(),
+            TypedPane::Workflow { .. } => "Workflow".to_string(),
+            TypedPane::Settings => I18n::as_ref(app).tr(I18nKey::CommonSettings),
+            TypedPane::EnvVarCollection => "Environment Variables".to_string(),
+            TypedPane::EnvironmentManagement => "Environments".to_string(),
+            TypedPane::AIFact => "Rules".to_string(),
+            TypedPane::AIDocument => "Plan".to_string(),
+            TypedPane::ExecutionProfileEditor => "Execution Profile".to_string(),
+            TypedPane::Other => "Other".to_string(),
         }
     }
 
@@ -2621,6 +2622,7 @@ fn pane_display_title_and_subtitle(
     typed: &TypedPane<'_>,
     title: &str,
     secondary_title: &str,
+    app: &AppContext,
 ) -> (String, String) {
     if matches!(typed, TypedPane::Code(_)) && !title.is_empty() {
         let path = Path::new(title);
@@ -2639,7 +2641,7 @@ fn pane_display_title_and_subtitle(
     } else {
         (
             if title.is_empty() {
-                typed.kind_label().to_string()
+                typed.kind_label(app)
             } else {
                 title.to_string()
             },
@@ -2670,6 +2672,7 @@ fn build_vertical_tabs_summary_data(
             &typed,
             pane_configuration.title().trim(),
             pane_configuration.title_secondary().trim(),
+            app,
         );
 
         match typed {
@@ -2802,6 +2805,7 @@ impl<'a> PaneProps<'a> {
             &typed,
             pane_configuration.title().trim(),
             pane_configuration.title_secondary().trim(),
+            app,
         );
 
         Some(Self {
@@ -5604,7 +5608,7 @@ fn render_warp_drive_object_detail_section(
         appearance,
     ));
     section.add_child(render_detail_badge(
-        props.typed.kind_label(),
+        props.typed.kind_label(app),
         Some(render_detail_kind_badge_icon(props, appearance, app)),
         None,
         text_colors.disabled,

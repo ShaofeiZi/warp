@@ -60,6 +60,7 @@ use crate::{
     cmd_or_ctrl_shift,
     editor::InteractionState,
     features::FeatureFlag,
+    i18n::{I18n, I18nKey},
     notebooks::{
         editor::{find_bar::FindBarAction, model::word_unit},
         link::{LinkTarget, NotebookLinks, ResolveError},
@@ -2289,13 +2290,17 @@ impl RichTextEditorView {
 
         // Common secondary link actions:
         let ui_builder = appearance.ui_builder().clone();
+        let copy_link_tooltip = I18n::as_ref(ctx).tr(I18nKey::CommonCopyLink);
         tool_tip.add_child(
             Container::new(
                 appearance
                     .ui_builder()
                     .copy_button(12., self.mouse_states.copy_link_mouse_handle.clone())
                     .with_tooltip(move || {
-                        ui_builder.tool_tip("Copy link".to_owned()).build().finish()
+                        ui_builder
+                            .tool_tip(copy_link_tooltip.clone())
+                            .build()
+                            .finish()
                     })
                     .build()
                     .on_click(|ctx, _, _| ctx.dispatch_typed_action(EditorViewAction::CopyLink))
@@ -2307,7 +2312,7 @@ impl RichTextEditorView {
         // Link-specific secondary action:
         if let LinkState::Resolved(target) = &link_url.state {
             let target = target.clone();
-            if let Some(secondary_action) = target.secondary_action() {
+            if let Some(secondary_action) = target.secondary_action(ctx) {
                 let mut button = appearance
                     .ui_builder()
                     .button(
@@ -2415,11 +2420,10 @@ impl RichTextEditorView {
         let path = selected_file_path.path.clone();
         let line_and_column_num = selected_file_path.line_and_column_num;
         let primary_text = if path.is_dir() {
-            "Open folder"
+            I18n::as_ref(ctx).tr(I18nKey::CommonOpenFolder)
         } else {
-            "Open file"
-        }
-        .to_string();
+            I18n::as_ref(ctx).tr(I18nKey::CommonOpenFile)
+        };
         let show_open_in_warp = should_show_open_in_warp_link(&path, ctx);
         let path_for_primary = path.clone();
         let modifier = directly_open_link_keybinding_string();
@@ -2440,7 +2444,7 @@ impl RichTextEditorView {
         if show_open_in_warp {
             let path_for_warp = path.clone();
             links.push(TooltipLink {
-                text: "Open in Warp".to_string(),
+                text: I18n::as_ref(ctx).tr(I18nKey::CommonOpenInWarp),
                 on_click: Box::new(move |ctx: &mut EventContext| {
                     ctx.dispatch_typed_action(EditorViewAction::OpenFile {
                         path: path_for_warp.clone(),
@@ -2746,7 +2750,7 @@ impl TypedActionView for RichTextEditorView {
                 }
                 let window_id = ctx.window_id();
                 crate::workspace::ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                    let toast = DismissibleToast::default(String::from("Link copied"));
+                    let toast = DismissibleToast::default(I18n::as_ref(ctx).tr(I18nKey::CommonLinkCopied));
                     toast_stack.add_ephemeral_toast(toast, window_id, ctx);
                 });
                 ctx.notify();
@@ -3052,7 +3056,7 @@ impl TypedActionView for RichTextEditorView {
                 ))
             }
             EditorViewAction::SecondaryLinkAction(link) => {
-                let content = link.secondary_action().map_or_else(
+                let content = link.secondary_action(ctx).map_or_else(
                     || format!("Secondary click on {}", **link),
                     |action| action.accessibility_content.into_owned(),
                 );

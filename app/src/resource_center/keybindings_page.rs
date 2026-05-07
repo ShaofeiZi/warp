@@ -15,7 +15,7 @@ use warpui::{
     AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 
-use crate::settings_view;
+use crate::i18n::{I18n, I18nKey};
 use crate::workspace::tab_settings::TabSettings;
 use crate::{
     appearance::Appearance,
@@ -100,7 +100,10 @@ impl KeybindingsView {
 
         search_editor.update(ctx, |editor, ctx| {
             editor.clear_buffer_and_reset_undo_stack(ctx);
-            editor.set_placeholder_text(settings_view::keybindings::SEARCH_PLACEHOLDER, ctx);
+            editor.set_placeholder_text(
+                I18n::as_ref(ctx).tr(I18nKey::SettingsKeybindingsSearchPlaceholder),
+                ctx,
+            );
         });
 
         let search_bar = {

@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::i18n::{I18n, I18nKey};
 use crate::modal::Modal;
 use crate::ui_components::blended_colors;
 use warp_core::ui::appearance::Appearance;
@@ -146,7 +147,7 @@ impl InactivityModalBody {
         }
     }
 
-    fn render_countdown(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_countdown(&self, appearance: &Appearance, _app: &AppContext) -> Box<dyn Element> {
         let text = format!(
             "Sharing will end in {}:{:02} due to inactivity.",
             self.duration.as_secs() / 60,
@@ -166,7 +167,7 @@ impl InactivityModalBody {
         .finish()
     }
 
-    fn render_stop_sharing_button(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_stop_sharing_button(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         Container::new(
             appearance
                 .ui_builder()
@@ -178,7 +179,7 @@ impl InactivityModalBody {
                     font_weight: Some(Weight::Bold),
                     ..Default::default()
                 })
-                .with_centered_text_label(String::from("Stop sharing"))
+                .with_centered_text_label(I18n::as_ref(app).tr(I18nKey::CommonStopSharing))
                 .build()
                 .with_cursor(Cursor::PointingHand)
                 .on_click(move |ctx, _, _| {
@@ -225,9 +226,9 @@ impl View for InactivityModalBody {
 
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(app);
-        let stop_sharing_button = self.render_stop_sharing_button(appearance);
+        let stop_sharing_button = self.render_stop_sharing_button(appearance, app);
         let continue_sharing_button = self.render_continue_sharing_button(appearance);
-        let countdown = self.render_countdown(appearance);
+        let countdown = self.render_countdown(appearance, app);
 
         let header = Container::new(
             Text::new_inline(

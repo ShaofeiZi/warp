@@ -46,6 +46,7 @@ use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{elements, ViewHandle};
 
 use crate::ai::agent::ImageContext;
+use crate::i18n::{I18n, I18nKey};
 use crate::ai::blocklist::{BlocklistAIContextModel, PendingAttachment, PendingFile};
 use crate::ai::predict::next_command_model::{NextCommandModel, NextCommandSuggestionState};
 use crate::appearance::Appearance;
@@ -1682,7 +1683,7 @@ impl ImageContextOptions {
         matches!(self, ImageContextOptions::Enabled { .. })
     }
 
-    pub fn tooltip_text(&self) -> String {
+    pub fn tooltip_text(&self, app: &AppContext) -> String {
         if let ImageContextOptions::Enabled {
             unsupported_model,
             is_processing_attached_images,
@@ -1695,7 +1696,7 @@ impl ImageContextOptions {
             }
 
             if *is_processing_attached_images {
-                return "Loading...".into();
+                return I18n::as_ref(app).tr(I18nKey::CommonLoading).into();
             }
 
             if *num_images_attached >= MAX_IMAGE_COUNT_FOR_QUERY {
@@ -8208,7 +8209,7 @@ impl EditorView {
             controls.add_child(
                 Container::new(self.render_image_context_button(
                     !self.image_context_options.is_enabled(),
-                    self.image_context_options.tooltip_text(),
+                    self.image_context_options.tooltip_text(ctx),
                     icon_size,
                     appearance,
                 ))

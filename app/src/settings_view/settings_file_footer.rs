@@ -8,6 +8,7 @@
 //!   error *and* the user has dismissed the workspace banner.
 //! * Otherwise, a plain bordered "Open settings file" button.
 use crate::appearance::Appearance;
+use crate::i18n::{I18n, I18nKey};
 use crate::settings::SettingsFileError;
 use crate::ui_components::icons::Icon;
 use crate::WorkspaceAction;
@@ -22,6 +23,7 @@ use warpui::elements::{
 };
 use warpui::fonts::{FamilyId, Properties, Weight};
 use warpui::platform::Cursor;
+use warpui::{AppContext, SingletonEntity};
 
 /// Horizontal + vertical padding applied to the footer inside the sidebar.
 const FOOTER_PADDING: f32 = 12.;
@@ -98,6 +100,7 @@ pub struct SettingsFooterMouseStates {
 /// 4px rounded corners, `code-02` leading icon, semibold label.
 pub fn render_open_settings_file_button(
     appearance: &Appearance,
+    app: &AppContext,
     mouse_state: MouseStateHandle,
 ) -> Box<dyn Element> {
     let theme = appearance.theme();
@@ -112,13 +115,17 @@ pub fn render_open_settings_file_button(
             .with_height(FOOTER_ICON_SIZE)
             .finish();
 
-        let label = Text::new_inline("Open settings file", ui_font_family, FOOTER_FONT_SIZE)
-            .with_color(text_color)
-            .with_style(Properties {
-                weight: Weight::Semibold,
-                ..Default::default()
-            })
-            .finish();
+        let label = Text::new_inline(
+            I18n::as_ref(app).tr(I18nKey::SettingsOpenSettingsFile),
+            ui_font_family,
+            FOOTER_FONT_SIZE,
+        )
+        .with_color(text_color)
+        .with_style(Properties {
+            weight: Weight::Semibold,
+            ..Default::default()
+        })
+        .finish();
 
         // Use `MainAxisSize::Max` so the row (and its surrounding bordered
         // container) expands to fill the full sidebar width. The icon + text
@@ -158,6 +165,7 @@ pub fn render_settings_error_alert(
     error: &SettingsFileError,
     ai_enabled: bool,
     mouse_states: &SettingsFooterMouseStates,
+    app: &AppContext,
 ) -> Box<dyn Element> {
     let theme = appearance.theme();
     // Warning banner colors: yellow background, contrast-safe text on top of
@@ -227,7 +235,7 @@ pub fn render_settings_error_alert(
         ui_font_family,
         text_color,
         mouse_states.alert_open_file_button.clone(),
-        "Open file",
+        I18n::as_ref(app).tr(I18nKey::CommonOpenFile),
         /*icon=*/ None,
         /*bordered=*/ true,
         WorkspaceAction::OpenSettingsFile,
@@ -249,7 +257,7 @@ pub fn render_settings_error_alert(
             ui_font_family,
             text_color,
             mouse_states.alert_fix_with_oz_button.clone(),
-            "Fix with Oz",
+            "Fix with Oz".to_owned(),
             Some(Icon::Oz),
             /*bordered=*/ false,
             WorkspaceAction::FixSettingsWithOz { error_description },
@@ -284,6 +292,7 @@ pub fn render_settings_error_alert(
 /// it aligns with the nav items above.
 pub fn render_footer(
     kind: SettingsFooterKind,
+    app: &AppContext,
     appearance: &Appearance,
     error: Option<&SettingsFileError>,
     ai_enabled: bool,
@@ -293,15 +302,17 @@ pub fn render_footer(
         SettingsFooterKind::Hidden => return Empty::new().finish(),
         SettingsFooterKind::OpenButton => render_open_settings_file_button(
             appearance,
+            app,
             mouse_states.open_settings_file_button.clone(),
         ),
         SettingsFooterKind::ErrorAlert => match error {
-            Some(error) => render_settings_error_alert(appearance, error, ai_enabled, mouse_states),
+            Some(error) => render_settings_error_alert(appearance, error, ai_enabled, mouse_states, app),
             // Defensive fallback: if the error disappears between `choose` and
             // `render_footer`, fall back to the plain button rather than
             // rendering an empty alert shell.
             None => render_open_settings_file_button(
                 appearance,
+                app,
                 mouse_states.open_settings_file_button.clone(),
             ),
         },
@@ -319,7 +330,7 @@ fn render_alert_action_button(
     ui_font_family: FamilyId,
     text_color: ColorU,
     mouse_state: MouseStateHandle,
-    text: &'static str,
+    text: String,
     icon: Option<Icon>,
     bordered: bool,
     action: WorkspaceAction,

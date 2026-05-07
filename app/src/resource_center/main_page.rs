@@ -3,6 +3,7 @@ use crate::{
     changelog_model::ChangelogModel,
     channel::ChannelState,
     features::FeatureFlag,
+    i18n::{I18n, I18nKey},
     resource_center::skip_tips_and_write_to_user_defaults,
     send_telemetry_from_ctx,
     server::telemetry::TelemetryEvent,
@@ -344,7 +345,7 @@ impl ResourceCenterMainView {
         .finish()
     }
 
-    fn render_invite_button(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_invite_button(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let default_styles = UiComponentStyles {
             font_size: Some(DETAIL_FONT_SIZE),
             font_family_id: Some(appearance.ui_font_family()),
@@ -394,7 +395,7 @@ impl ResourceCenterMainView {
                 .with_text_and_icon_label(
                     TextAndIcon::new(
                         TextAndIconAlignment::IconFirst,
-                        "Invite a friend to Warp",
+                        I18n::as_ref(app).tr(I18nKey::SettingsAccountInviteFriendToWarp),
                         Icon::new(SEND_SVG_PATH, appearance.theme().accent()),
                         MainAxisSize::Max,
                         MainAxisAlignment::Center,
@@ -507,7 +508,7 @@ impl View for ResourceCenterMainView {
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(app);
         let body = self.render_body(appearance);
-        let invite_button = self.render_invite_button(appearance);
+        let invite_button = self.render_invite_button(appearance, app);
         let skip_tips = self.render_skip_tips_button(appearance);
 
         let mut main_page = Flex::column();

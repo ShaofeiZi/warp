@@ -25,6 +25,7 @@ use warpui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 
+use crate::i18n::{I18n, I18nKey};
 use crate::search::result_renderer::ItemHighlightState;
 use warpui::ui_components::components::UiComponent;
 
@@ -647,7 +648,7 @@ fn render_reference_entry(
             } else {
                 // Show loading indicator when line_content is None
                 Text::new_inline(
-                    "Loading...",
+                    I18n::as_ref(app).tr(I18nKey::CommonLoading),
                     appearance.monospace_font_family(),
                     appearance.monospace_font_size(),
                 )

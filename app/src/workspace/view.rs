@@ -27,6 +27,7 @@ use self::vertical_tabs::{
 use crate::workspace::cross_window_tab_drag::{
     AttachTarget, CrossWindowTabDrag, DragResult, DropResult, GhostState,
 };
+use crate::i18n::{I18n, I18nKey};
 pub(crate) use onboarding::OnboardingTutorial;
 
 use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
@@ -390,7 +391,9 @@ use crate::{
     settings,
     ui_components::blended_colors,
 };
-use crate::{send_telemetry_from_ctx, GlobalResourceHandles};
+use crate::{
+    send_telemetry_from_ctx, GlobalResourceHandles,
+};
 
 use futures::Future;
 use itertools::Itertools;
@@ -1249,7 +1252,7 @@ impl Workspace {
             EditorView::single_line(options, ctx)
         });
         editor.update(ctx, |editor, ctx| {
-            editor.set_placeholder_text("Search tabs...", ctx);
+            editor.set_placeholder_text(I18n::as_ref(ctx).tr(I18nKey::CommonSearchTabs), ctx);
         });
         ctx.subscribe_to_view(&editor, |me, editor_view, event, ctx| match event {
             EditorEvent::Edited(_) => {
@@ -2021,11 +2024,17 @@ impl Workspace {
                 let has_worktree = selection.enable_worktree;
                 let has_params = {
                     use crate::tab_configs::session_config::build_tab_config;
+                    let name_prefix = if selection.enable_worktree {
+                        "Worktree".to_string()
+                    } else {
+                        I18n::as_ref(ctx).tr(I18nKey::CommonNewTab)
+                    };
                     let config = build_tab_config(
                         &selection.session_type,
                         &selection.directory,
                         selection.enable_worktree,
                         selection.autogenerate_worktree_branch_name,
+                        &name_prefix,
                     );
                     !config.params.is_empty()
                 };
@@ -2096,12 +2105,19 @@ impl Workspace {
     ) {
         use crate::tab_configs::session_config::{build_tab_config, write_tab_config};
 
+        let name_prefix = if selection.enable_worktree {
+            "Worktree".to_string()
+        } else {
+            I18n::as_ref(ctx).tr(I18nKey::CommonNewTab)
+        };
+
         // Build a TabConfig.
         let config = build_tab_config(
             &selection.session_type,
             &selection.directory,
             selection.enable_worktree,
             selection.autogenerate_worktree_branch_name,
+            &name_prefix,
         );
 
         let old_pane_group_id = self.active_tab_pane_group().id();
@@ -2485,7 +2501,7 @@ impl Workspace {
                         let toast = DismissibleToast::error(message)
                             .with_object_id(object_id.clone())
                             .with_link(
-                                ToastLink::new("Open file".to_string()).with_onclick_action(
+                                ToastLink::new(I18n::as_ref(ctx).tr(I18nKey::CommonOpenFile)).with_onclick_action(
                                     WorkspaceAction::OpenTabConfigErrorFile {
                                         path,
                                         toast_object_id: object_id,
@@ -7222,7 +7238,7 @@ impl Workspace {
         self.add_tab_with_pane_layout(
             panes_layout,
             Arc::new(HashMap::new()),
-            Some("Settings".to_owned()),
+            Some(I18n::as_ref(ctx).tr(I18nKey::CommonSettings)),
             ctx,
         );
     }
@@ -7649,7 +7665,7 @@ impl Workspace {
                     view.toast_stack.update(ctx, |toast_stack, ctx| {
                         let toast = DismissibleToast::success(message.to_string())
                             .with_link(
-                                ToastLink::new("Learn more".to_string()).with_href(
+                                ToastLink::new(I18n::as_ref(ctx).tr(I18nKey::CommonLearnMore)).with_href(
                                     "https://docs.warp.dev/reference/cli".to_string(),
                                 ),
                             );
@@ -8318,10 +8334,12 @@ impl Workspace {
                     ) =>
                 {
                     items.push(
-                        MenuItemFields::new("Update and relaunch Warp")
-                            .with_on_select_action(WorkspaceAction::ApplyUpdate)
-                            .with_override_text_color(appearance.theme().ansi_fg_red())
-                            .into_item(),
+                        MenuItemFields::new(
+                            I18n::as_ref(app).tr(I18nKey::WorkspaceUserMenuUpdateAndRelaunch),
+                        )
+                        .with_on_select_action(WorkspaceAction::ApplyUpdate)
+                        .with_override_text_color(appearance.theme().ansi_fg_red())
+                        .into_item(),
                     )
                 }
                 AutoupdateStage::Updating { new_version, .. }
@@ -8341,10 +8359,12 @@ impl Workspace {
                     ) =>
                 {
                     items.push(
-                        MenuItemFields::new("Update Warp manually")
-                            .with_on_select_action(WorkspaceAction::DownloadNewVersion)
-                            .with_override_text_color(appearance.theme().ansi_fg_red())
-                            .into_item(),
+                        MenuItemFields::new(
+                            I18n::as_ref(app).tr(I18nKey::WorkspaceUserMenuUpdateManual),
+                        )
+                        .with_on_select_action(WorkspaceAction::DownloadNewVersion)
+                        .with_override_text_color(appearance.theme().ansi_fg_red())
+                        .into_item(),
                     )
                 }
                 _ => {}
@@ -8352,33 +8372,33 @@ impl Workspace {
         }
 
         items.extend([
-            MenuItemFields::new("What's new")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::WorkspaceUserMenuWhatsNew))
                 .with_on_select_action(WorkspaceAction::ViewLatestChangelog)
                 .into_item(),
-            MenuItemFields::new("Settings")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::CommonSettings))
                 .with_on_select_action(WorkspaceAction::ShowSettings)
                 .into_item(),
-            MenuItemFields::new("Keyboard shortcuts")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::ResourceCenterKeyboardShortcuts))
                 .with_on_select_action(WorkspaceAction::ToggleKeybindingsPage)
                 .into_item(),
             MenuItem::Separator,
-            MenuItemFields::new("Documentation")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::CommonDocumentation))
                 .with_on_select_action(WorkspaceAction::ViewUserDocs)
                 .into_item(),
-            MenuItemFields::new("Feedback")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::CommonFeedback))
                 .with_on_select_action(WorkspaceAction::SendFeedback)
                 .into_item(),
         ]);
 
         #[cfg(not(target_family = "wasm"))]
         items.push(
-            MenuItemFields::new("View Warp logs")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::WorkspaceUserMenuViewWarpLogs))
                 .with_on_select_action(WorkspaceAction::ViewLogs)
                 .into_item(),
         );
 
         items.extend([
-            MenuItemFields::new("Slack")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::CommonSlack))
                 .with_on_select_action(WorkspaceAction::JoinSlack)
                 .into_item(),
             MenuItem::Separator,
@@ -8386,7 +8406,7 @@ impl Workspace {
 
         if self.auth_state.is_anonymous_or_logged_out() {
             items.push(
-                MenuItemFields::new("Sign up")
+                MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::SettingsAccountSignUp))
                     .with_on_select_action(WorkspaceAction::SignupAnonymousUser)
                     .into_item(),
             );
@@ -8400,7 +8420,7 @@ impl Workspace {
 
         if is_on_paid_plan {
             items.push(
-                MenuItemFields::new("Billing and usage")
+                MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::SettingsAccountBillingAndUsage))
                     .with_on_select_action(WorkspaceAction::ShowSettingsPage(
                         SettingsSection::BillingAndUsage,
                     ))
@@ -8408,21 +8428,21 @@ impl Workspace {
             );
         } else {
             items.push(
-                MenuItemFields::new("Upgrade")
+                MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::SettingsAccountUpgrade))
                     .with_on_select_action(WorkspaceAction::ShowUpgrade)
                     .into_item(),
             );
         }
 
         items.push(
-            MenuItemFields::new("Invite a friend")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::SettingsAccountInviteAFriend))
                 .with_on_select_action(WorkspaceAction::ShowReferralSettingsPage)
                 .into_item(),
         );
 
         if !self.auth_state.is_anonymous_or_logged_out() {
             items.push(
-                MenuItemFields::new("Log out")
+                MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::SettingsAccountLogOut))
                     .with_on_select_action(WorkspaceAction::LogOut)
                     .into_item(),
             );
@@ -17258,7 +17278,7 @@ impl Workspace {
         Shrinkable::new(1.0, inner).finish()
     }
 
-    fn render_title_bar_search_bar(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_title_bar_search_bar(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let theme = appearance.theme();
         let text_color = theme.sub_text_color(theme.background());
 
@@ -17280,7 +17300,7 @@ impl Workspace {
                         Shrinkable::new(
                             1.,
                             Text::new_inline(
-                                "Search sessions, agents, files...",
+                                I18n::as_ref(app).tr(I18nKey::CommonSearchSessionsAgentsFiles),
                                 appearance.ui_font_family(),
                                 14.,
                             )
@@ -17469,7 +17489,7 @@ impl Workspace {
                         1.,
                         Clipped::new(
                             Container::new(
-                                Align::new(self.render_title_bar_search_bar(appearance)).finish(),
+                                Align::new(self.render_title_bar_search_bar(appearance, ctx)).finish(),
                             )
                             .with_padding_left(TITLE_BAR_SEARCH_BAR_SLOT_PADDING)
                             .with_padding_right(TITLE_BAR_SEARCH_BAR_SLOT_PADDING)
@@ -17799,7 +17819,7 @@ impl Workspace {
             }
 
             target.add_child(
-                Container::new(self.render_settings_button(appearance))
+                Container::new(self.render_settings_button(appearance, ctx))
                     .with_margin_left(TAB_BAR_PADDING_LEFT)
                     .finish(),
             );
@@ -18204,7 +18224,7 @@ impl Workspace {
                 icons::Icon::Lightbulb,
                 &self.mouse_states.resource_center_icon,
                 WorkspaceAction::ToggleResourceCenter,
-                "Warp Essentials".to_string(),
+                I18n::as_ref(ctx).tr(I18nKey::ResourceCenterWarpEssentials),
                 self.cached_keybindings[TOGGLE_RESOURCE_CENTER_KEYBINDING_NAME].clone(),
                 false,
                 false,
@@ -18239,14 +18259,14 @@ impl Workspace {
         Align::new(button).finish()
     }
 
-    fn render_settings_button(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_settings_button(&self, appearance: &Appearance, ctx: &AppContext) -> Box<dyn Element> {
         Align::new(
             self.render_tab_bar_icon_button(
                 appearance,
                 icons::Icon::Gear,
                 &self.mouse_states.settings_icon,
                 WorkspaceAction::ShowSettings,
-                "Settings".to_string(),
+                I18n::as_ref(ctx).tr(I18nKey::CommonSettings),
                 self.cached_keybindings[SHOW_SETTINGS_KEYBINDING_NAME].clone(),
                 false,
                 false,
@@ -18717,7 +18737,7 @@ impl Workspace {
             description,
             secondary_button,
             button: Some(WorkspaceBannerButtonDetails {
-                text: "Open file".to_owned(),
+                text: I18n::as_ref(app).tr(I18nKey::CommonOpenFile),
                 action: WorkspaceAction::OpenSettingsFile,
                 variant: BannerButtonVariant::Outlined,
                 icon: None,

@@ -9,6 +9,7 @@ use warpui::{
 use crate::{
     appearance::Appearance,
     editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions},
+    i18n::{I18n, I18nKey},
     report_if_error, send_telemetry_from_ctx,
     server::telemetry::TelemetryEvent,
     settings_view::features_page::render_group,
@@ -152,7 +153,7 @@ impl View for WorkingDirectoryView {
                         config.new_window.mode == WorkingDirectoryMode::CustomDir,
                         appearance,
                     ),
-                    ui_builder.label("New tab").build().finish(),
+                    ui_builder.label(I18n::as_ref(app).tr(I18nKey::CommonNewTab)).build().finish(),
                     render_row(
                         &self.new_tab_working_directory_dropdown,
                         &self.new_tab_working_directory_editor,

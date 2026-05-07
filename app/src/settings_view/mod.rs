@@ -10,6 +10,7 @@ use crate::{
         EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
         TextColors, TextOptions,
     },
+    i18n::{I18n, I18nKey},
     menu::{self, Menu, MenuItem, MenuItemFields},
     pane_group::{
         pane::view, BackingView, Direction, PaneConfiguration, PaneEvent, SplitPaneState,
@@ -1013,7 +1014,9 @@ pub struct SettingsView {
 
 impl SettingsView {
     pub fn new(page: Option<SettingsSection>, ctx: &mut ViewContext<Self>) -> Self {
-        let pane_configuration = ctx.add_model(|_ctx| PaneConfiguration::new("Settings"));
+        let settings_title = I18n::as_ref(ctx).tr(I18nKey::CommonSettings);
+        let pane_configuration =
+            ctx.add_model(move |_ctx| PaneConfiguration::new(settings_title.clone()));
 
         let global_resource_handles = GlobalResourceHandlesProvider::as_ref(ctx).get().clone();
         // Main settings page with accounts info
@@ -1146,7 +1149,10 @@ impl SettingsView {
                 ..Default::default()
             };
             let mut editor = EditorView::single_line(options, ctx);
-            editor.set_placeholder_text("Search", ctx);
+            editor.set_placeholder_text(
+                I18n::as_ref(ctx).tr(I18nKey::SettingsSearchPlaceholder),
+                ctx,
+            );
             editor
         });
 
@@ -1555,7 +1561,7 @@ impl SettingsView {
             );
 
             items.push(
-                MenuItemFields::new("Close pane")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonClosePane))
                     .with_on_select_action(SettingsAction::Close)
                     .with_key_shortcut_label(
                         custom_tag_to_keystroke(CustomAction::CloseCurrentSession.into())
@@ -2395,6 +2401,7 @@ impl View for SettingsView {
         );
         let footer = render_footer(
             footer_kind,
+            app,
             appearance,
             self.settings_file_error.as_ref(),
             AISettings::as_ref(app).is_any_ai_enabled(app),
@@ -2658,7 +2665,7 @@ impl BackingView for SettingsView {
         _ctx: &view::HeaderRenderContext<'_>,
         _app: &AppContext,
     ) -> view::HeaderContent {
-        view::HeaderContent::simple("Settings")
+        view::HeaderContent::simple(I18n::as_ref(_app).tr(I18nKey::CommonSettings))
     }
 
     fn set_focus_handle(&mut self, focus_handle: PaneFocusHandle, _ctx: &mut ViewContext<Self>) {

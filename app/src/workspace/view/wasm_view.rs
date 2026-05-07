@@ -10,6 +10,7 @@ use crate::uri::browser_url_handler::parse_current_url;
 use super::PanelPosition;
 
 use crate::ai::agent_conversations_model::AgentConversationsModel;
+use crate::i18n::{I18n, I18nKey};
 use crate::ai::conversation_details_panel::{
     ConversationDetailsData, ConversationDetailsPanel, ConversationDetailsPanelEvent,
 };
@@ -46,7 +47,7 @@ impl Workspace {
         ctx: &mut ViewContext<Self>,
     ) -> ViewHandle<ActionButton> {
         ctx.add_typed_action_view(|_ctx| {
-            ActionButton::new("Open in Warp", PrimaryTheme).on_click(move |ctx| {
+            ActionButton::new(I18n::as_ref(ctx).tr(I18nKey::CommonOpenInWarp), PrimaryTheme).on_click(move |ctx| {
                 // Get the current URL and dispatch action to open it on desktop
                 if let Some(url) = parse_current_url() {
                     ctx.dispatch_typed_action(WorkspaceAction::OpenLinkOnDesktop(url));

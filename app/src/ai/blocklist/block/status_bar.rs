@@ -9,6 +9,7 @@ use super::{
         WarpingIndicatorProps, WarpingProps, LOAD_OUTPUT_MESSAGE, WAITING_FOR_USER_INPUT_MESSAGE,
     },
 };
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     ai::agent_tips::AITipModel,
     terminal::{
@@ -1013,7 +1014,7 @@ fn render_agent_tip(tip: &AgentTip, app: &AppContext) -> Box<dyn Element> {
         fragments.push(FormattedTextFragment::hyperlink_action(text, action));
     } else if let Some(link_target) = tip.link.clone() {
         fragments.push(FormattedTextFragment::plain_text(" "));
-        fragments.push(FormattedTextFragment::hyperlink("Learn more", link_target));
+        fragments.push(FormattedTextFragment::hyperlink(I18n::as_ref(app).tr(I18nKey::CommonLearnMore), link_target));
     }
 
     let formatted_text =

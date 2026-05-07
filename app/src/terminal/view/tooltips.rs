@@ -11,6 +11,7 @@ use warpui::{
 };
 
 use super::{TerminalAction, TerminalView};
+use crate::i18n::{I18n, I18nKey};
 use crate::util::tooltips::{TooltipLink, TooltipRedaction};
 use crate::{
     appearance::Appearance,
@@ -66,7 +67,7 @@ fn open_in_warp_tooltip(
         None
     };
     Some(GridTooltipLink {
-        text: "Open in Warp".to_string(),
+        text: I18n::as_ref(app).tr(I18nKey::CommonOpenInWarp),
         action: TerminalAction::OpenCodeInWarp {
             path,
             layout: *EditorSettings::as_ref(app).open_file_layout.value(),
@@ -236,7 +237,7 @@ impl TerminalView {
             }
 
             links.push(GridTooltipLink {
-                text: link.tooltip_text().to_owned(),
+                text: link.tooltip_text(app),
                 action: TerminalAction::OpenGridLink(link.clone()),
                 mouse_state: self.mouse_states.grid_link_tooltip.clone(),
                 detail,
@@ -277,7 +278,7 @@ impl TerminalView {
             }
 
             links.push(GridTooltipLink {
-                text: tooltip_info.link.tooltip_text().to_owned(),
+                text: tooltip_info.link.tooltip_text(app),
                 action: TerminalAction::OpenRichContentLink(tooltip_info.link.clone()),
                 mouse_state: self.mouse_states.rich_content_link_tooltip.clone(),
                 detail,

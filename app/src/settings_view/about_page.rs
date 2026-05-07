@@ -6,7 +6,10 @@ use super::{
     SettingsSection,
 };
 use crate::{
-    appearance::Appearance, channel::ChannelState, themes::theme::ColorScheme,
+    appearance::Appearance,
+    channel::ChannelState,
+    i18n::{I18n, I18nKey},
+    themes::theme::ColorScheme,
     workspace::WorkspaceAction,
 };
 use warpui::{
@@ -16,7 +19,7 @@ use warpui::{
         MainAxisAlignment, MouseStateHandle, ParentElement, Wrap,
     },
     ui_components::components::UiComponent,
-    AppContext, Entity, View, ViewContext, ViewHandle,
+    AppContext, Entity, SingletonEntity, View, ViewContext, ViewHandle,
 };
 
 pub struct AboutPageView {
@@ -61,7 +64,7 @@ impl SettingsWidget for AboutPageWidget {
         &self,
         _view: &AboutPageView,
         appearance: &Appearance,
-        _app: &AppContext,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         let theme = appearance.theme();
         let ui_builder = appearance.ui_builder();
@@ -118,7 +121,7 @@ impl SettingsWidget for AboutPageWidget {
                 .with_child(version_row.finish())
                 .with_child(
                     ui_builder
-                        .span("Copyright 2026 Warp")
+                        .span(I18n::as_ref(app).tr(I18nKey::SettingsAboutCopyright))
                         .build()
                         .with_margin_top(16.)
                         .finish(),

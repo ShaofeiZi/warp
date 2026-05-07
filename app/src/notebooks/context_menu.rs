@@ -6,11 +6,12 @@ use warpui::{
     elements::{ChildAnchor, OffsetPositioning, ParentAnchor, ParentOffsetBounds, Stack},
     keymap::Trigger,
     presenter::ChildView,
-    Action, Element, EventContext, TypedActionView, View, ViewContext, ViewHandle,
+    Action, Element, EventContext, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 
 use crate::{
     editor::EditorView,
+    i18n::{I18n, I18nKey},
     menu::{self, Menu, MenuItem, MenuItemFields},
     pane_group::{focus_state::PaneFocusHandle, PaneEvent, SplitPaneState},
     util::bindings::{keybinding_name_to_display_string, trigger_to_keystroke, CustomAction},
@@ -216,7 +217,7 @@ where
             );
 
             items.push(
-                MenuItemFields::new("Close pane")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonClosePane))
                     .with_on_select_action(V::Action::from(ContextMenuAction::EmitPaneEvent(
                         PaneEvent::Close,
                     )))

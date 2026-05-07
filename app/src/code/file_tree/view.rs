@@ -16,6 +16,8 @@ use std::sync::Arc;
 use warp_util::path::LineAndColumnArg;
 use warp_util::standardized_path::StandardizedPath;
 
+use crate::i18n::{I18n, I18nKey};
+
 use repo_metadata::repositories::DetectedRepositories;
 use warp_core::send_telemetry_from_ctx;
 use warpui::elements::{
@@ -58,6 +60,7 @@ use crate::util::openable_file_type::{
 };
 use crate::{
     appearance::Appearance,
+    i18n::{I18n, I18nKey},
     menu::{Menu, MenuItem, MenuItemFields},
     server::telemetry::TelemetryEvent,
     ui_components::icons::Icon,
@@ -71,10 +74,6 @@ use warpui::ui_components::components::UiComponent;
 
 mod editing;
 mod render;
-
-const REMOTE_TEXT: &str = "The Project Explorer requires access to your local workspace, which isn’t supported in remote sessions.";
-const DISABLED_TEXT: &str = "The Project Explorer requires access to your local workspace. Open a new session or navigate to an active session to view.";
-const WSL_TEXT: &str = "The Project Explorer doesn't currently work in WSL.";
 
 /// Stable identifier for an item in the file tree.
 /// Includes both the root directory and the index within that root's flattened list.
@@ -2310,6 +2309,7 @@ impl FileTreeView {
         &self,
         item: &FileTreeItem,
         id: &FileTreeIdentifier,
+        ctx: &mut ViewContext<Self>,
     ) -> Vec<MenuItem<FileTreeAction>> {
         let is_remote = self.is_remote_item(id);
 
@@ -2339,7 +2339,7 @@ impl FileTreeView {
                         ]);
                     } else {
                         items.push(
-                            MenuItemFields::new("Open file")
+                            MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonOpenFile))
                                 .with_on_select_action(FileTreeAction::ItemClicked {
                                     id: id.clone(),
                                 })
@@ -2418,7 +2418,7 @@ impl FileTreeView {
             items.push(MenuItem::Separator);
         }
         items.extend([
-            MenuItemFields::new("Copy path")
+            MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyPath))
                 .with_on_select_action(FileTreeAction::CopyPath { id: id.clone() })
                 .into_item(),
             MenuItemFields::new("Copy relative path")
@@ -2739,7 +2739,7 @@ impl FileTreeView {
             )
             .with_child(
                 Text::new(
-                    "Project explorer unavailable",
+                    I18n::as_ref(app).tr(I18nKey::ProjectExplorerUnavailableTitle),
                     appearance.ui_font_family(),
                     appearance.ui_font_size() + 2.,
                 )
@@ -2926,13 +2926,19 @@ impl View for FileTreeView {
 
     #[cfg(not(feature = "local_fs"))]
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
-        self.render_error_state(REMOTE_TEXT.to_string(), app)
+        self.render_error_state(
+            I18n::as_ref(app).tr(I18nKey::ProjectExplorerRemoteUnavailable),
+            app,
+        )
     }
 
     #[cfg(feature = "local_fs")]
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
         if matches!(self.enablement, CodingPanelEnablementState::Disabled) {
-            return self.render_error_state(DISABLED_TEXT.to_string(), app);
+            return self.render_error_state(
+                I18n::as_ref(app).tr(I18nKey::ProjectExplorerDisabledUnavailable),
+                app,
+            );
         }
 
         if matches!(
@@ -2953,7 +2959,10 @@ impl View for FileTreeView {
                 return if has_remote_server {
                     self.render_loading_state(app)
                 } else {
-                    self.render_error_state(REMOTE_TEXT.to_string(), app)
+                    self.render_error_state(
+                        I18n::as_ref(app).tr(I18nKey::ProjectExplorerRemoteUnavailable),
+                        app,
+                    )
                 };
             }
 
@@ -2961,7 +2970,10 @@ impl View for FileTreeView {
                 self.enablement,
                 CodingPanelEnablementState::UnsupportedSession
             ) {
-                return self.render_error_state(WSL_TEXT.to_string(), app);
+                return self.render_error_state(
+                    I18n::as_ref(app).tr(I18nKey::ProjectExplorerWslUnavailable),
+                    app,
+                );
             }
 
             return self.render_loading_state(app);
@@ -3062,7 +3074,7 @@ impl TypedActionView for FileTreeView {
                 self.context_menu_state = Some(ContextMenuState {
                     position: *position,
                 });
-                let menu_items = self.context_menu_items(item, id);
+                let menu_items = self.context_menu_items(item, id, ctx);
                 self.context_menu.update(ctx, move |menu, ctx| {
                     menu.set_items(menu_items, ctx);
                     ctx.notify();

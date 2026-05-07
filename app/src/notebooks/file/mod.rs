@@ -31,6 +31,7 @@ use crate::{
     appearance::Appearance,
     cmd_or_ctrl_shift,
     editor::InteractionState,
+    i18n::{I18n, I18nKey},
     menu::{MenuItem, MenuItemFields},
     notebooks::editor::{model::NotebooksEditorModel, rich_text_styles},
     pane_group::{
@@ -955,13 +956,13 @@ impl BackingView for FileNotebookView {
                 // The markdown rendered/raw toggle is always visible in the pane header, so we don't
                 // duplicate it in the overflow menu. Keep "Open in editor" available for local files.
                 actions.push(
-                    MenuItemFields::new("Open in editor")
+                    MenuItemFields::new(I18n::as_ref(_ctx).tr(I18nKey::CommonOpenInEditor))
                         .with_on_select_action(FileNotebookAction::OpenInEditor)
                         .into_item(),
                 );
                 actions.extend([
                     MenuItem::Separator,
-                    MenuItemFields::new("Copy file path")
+                    MenuItemFields::new(I18n::as_ref(_ctx).tr(I18nKey::CommonCopyFilePath))
                         .with_on_select_action(FileNotebookAction::CopyFilePath)
                         .into_item(),
                 ]);

@@ -30,6 +30,7 @@ use crate::{
 use crate::{
     appearance::Appearance,
     cloud_object::{model::actions::ObjectActions, CloudObjectMetadataExt},
+    i18n::{I18n, I18nKey},
 };
 use crate::{cloud_object::model::actions::ObjectActionType, terminal::view::TerminalAction};
 use crate::{terminal::input::InputAction, ui_components::buttons::icon_button};
@@ -534,11 +535,11 @@ impl WorkflowsMoreInfoView {
             .finish()
     }
 
-    fn render_save_workflow_button(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_save_workflow_button(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let workflow = self.workflow.as_workflow().to_owned();
         render_hoverable_card_button(
             icons::Icon::Workflow,
-            Some("Save as workflow".to_string()),
+            Some(I18n::as_ref(app).tr(I18nKey::CommonSaveAsWorkflow)),
             self.button_mouse_states.save_as_workflow.clone(),
             move |ctx, _, _| {
                 ctx.dispatch_typed_action(TerminalAction::OpenWorkflowModalForAIWorkflow(
@@ -715,7 +716,7 @@ impl WorkflowsMoreInfoView {
                 row_content.add_children([edit_button, collapse_button, close_button]);
             }
             WorkflowType::AIGenerated { .. } => {
-                let save_as_workflow_button = self.render_save_workflow_button(appearance);
+                let save_as_workflow_button = self.render_save_workflow_button(appearance, app);
                 row_content.add_children([save_as_workflow_button, collapse_button, close_button]);
             }
             _ => row_content.add_children([collapse_button, close_button]),

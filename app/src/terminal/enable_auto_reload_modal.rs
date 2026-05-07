@@ -15,6 +15,7 @@ use warpui::ui_components::components::{Coords, UiComponent as _, UiComponentSty
 use warpui::{AppContext, Element, Entity, SingletonEntity as _, View, ViewContext, ViewHandle};
 
 use crate::features::FeatureFlag;
+use crate::i18n::{I18n, I18nKey};
 use crate::menu::MenuItemFields;
 use crate::modal::{Modal, ModalEvent, MODAL_PADDING, MODAL_WIDTH};
 use crate::pricing::{PricingInfoModel, PricingInfoModelEvent};
@@ -209,7 +210,7 @@ impl EnableAutoReloadModalBody {
         });
     }
 
-    fn render_content(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_content(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let theme = appearance.theme();
         let explanation_fragments = vec![
             FormattedTextFragment::plain_text("When enabled, "),
@@ -218,7 +219,7 @@ impl EnableAutoReloadModalBody {
                 " will automatically purchase your selected package when you run out. ",
             ),
             FormattedTextFragment::hyperlink(
-                "Learn more",
+                I18n::as_ref(app).tr(I18nKey::CommonLearnMore),
                 "https://docs.warp.dev/support-and-community/plans-and-billing/add-on-credits#id-2.-enable-auto-reload",
             ),
         ];
@@ -340,7 +341,7 @@ impl View for EnableAutoReloadModalBody {
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(app);
 
-        let content = Container::new(self.render_content(appearance))
+        let content = Container::new(self.render_content(appearance, app))
             .with_horizontal_padding(MODAL_PADDING)
             .with_margin_top(0.) // let the header padding handle the top margin
             .finish();

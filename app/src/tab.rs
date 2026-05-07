@@ -5,6 +5,7 @@ use crate::appearance::Appearance;
 /// the rendering and management of tabs in general.
 use crate::editor::EditorView;
 use crate::features::FeatureFlag;
+use crate::i18n::{I18n, I18nKey};
 use crate::launch_configs::launch_config::LaunchConfig;
 use crate::menu::{MenuAction, MenuItem, MenuItemFields};
 use crate::pane_group::{PaneGroup, PaneId};
@@ -235,7 +236,7 @@ impl TabData {
                     .is_active_sharer()
                 {
                     menu_items.push(
-                        MenuItemFields::new("Stop sharing")
+                        MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonStopSharing))
                             .with_on_select_action(WorkspaceAction::StopSharingSessionFromTabMenu {
                                 terminal_view_id: focused_session_view.id(),
                             })
@@ -243,7 +244,7 @@ impl TabData {
                     );
                 } else {
                     menu_items.push(
-                        MenuItemFields::new("Share session")
+                        MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonShareSession))
                             .with_on_select_action(WorkspaceAction::OpenShareSessionModal(index))
                             .into_item(),
                     );
@@ -253,7 +254,7 @@ impl TabData {
             // Always show an option to stop sharing all when there's at least 1 shared session in the tab.
             if !shared_session_view_ids.is_empty() {
                 menu_items.push(
-                    MenuItemFields::new("Stop sharing all")
+                    MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonStopSharingAll))
                         .with_on_select_action(WorkspaceAction::StopSharingAllSessionsInTab {
                             pane_group: self.pane_group.downgrade(),
                         })
@@ -278,7 +279,7 @@ impl TabData {
 
         if is_shared_or_viewed {
             menu_items.push(
-                MenuItemFields::new("Copy link")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyLink))
                     .with_on_select_action(WorkspaceAction::CopySharedSessionLinkFromTab {
                         tab_index: index,
                     })
@@ -313,7 +314,7 @@ impl TabData {
         let mut menu_items = vec![];
         let tab_title = Self::copyable_metadata_value(Some(pane_group.display_title(ctx)));
         if !uses_vertical_tabs(ctx) {
-            Self::push_copy_metadata_menu_item(&mut menu_items, "Copy tab title", tab_title);
+            Self::push_copy_metadata_menu_item(&mut menu_items, I18n::as_ref(ctx).tr(I18nKey::CommonCopyTabTitle), tab_title);
             return menu_items;
         }
 
@@ -333,7 +334,7 @@ impl TabData {
                 })
                 .unwrap_or_else(|| pane_group.focused_pane_id(ctx));
             (
-                "Copy pane title",
+                I18n::as_ref(ctx).tr(I18nKey::CommonCopyPaneTitle),
                 Self::copyable_pane_title(pane_group, pane_id, ctx),
                 pane_group.terminal_view_from_pane_id(pane_id, ctx),
             )
@@ -344,20 +345,20 @@ impl TabData {
                     pane_group.terminal_view_from_pane_id(target.locator.pane_id, ctx)
                 })
                 .or_else(|| pane_group.focused_session_view(ctx));
-            ("Copy tab title", tab_title, terminal_view)
+            (I18n::as_ref(ctx).tr(I18nKey::CommonCopyTabTitle), tab_title, terminal_view)
         };
 
         if let Some(terminal_view) = terminal_view {
             let terminal_view = terminal_view.as_ref(ctx);
             Self::push_copy_metadata_menu_item(
                 &mut menu_items,
-                "Copy branch",
+                I18n::as_ref(ctx).tr(I18nKey::CommonCopyBranch),
                 Self::copyable_metadata_value(terminal_view.current_git_branch(ctx)),
             );
             Self::push_copy_metadata_menu_item(&mut menu_items, title_label, title);
             Self::push_copy_metadata_menu_item(
                 &mut menu_items,
-                "Copy working directory",
+                I18n::as_ref(ctx).tr(I18nKey::CommonCopyWorkingDirectory),
                 Self::copyable_metadata_value(
                     terminal_view
                         .pwd()
@@ -378,12 +379,12 @@ impl TabData {
 
     fn push_copy_metadata_menu_item(
         menu_items: &mut Vec<MenuItem<WorkspaceAction>>,
-        label: &'static str,
+        label: impl Into<String>,
         value: Option<String>,
     ) {
         if let Some(value) = value {
             menu_items.push(
-                MenuItemFields::new(label)
+                MenuItemFields::new(label.into())
                     .with_on_select_action(WorkspaceAction::CopyTextToClipboard(value))
                     .into_item(),
             );
@@ -492,7 +493,7 @@ impl TabData {
 
         if ContextFlag::CloseWindow.is_enabled() || tabs_len != 1 {
             menu_items.push(
-                MenuItemFields::new("Close tab")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCloseTab))
                     .with_on_select_action(WorkspaceAction::CloseTab(index))
                     .into_item(),
             );

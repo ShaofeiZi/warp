@@ -6,6 +6,7 @@ use crate::{
         facts::{AIFact, AIMemory},
     },
     appearance::Appearance,
+    i18n::{I18n, I18nKey},
     auth::{
         auth_manager::{AuthManager, LoginGatedFeature},
         auth_state::AuthState,
@@ -4448,7 +4449,7 @@ impl DriveIndex {
                 if let Some(object) = object {
                     if let Some(object_link) = object.object_link() {
                         menu_items.push(
-                            MenuItemFields::new("Copy link")
+                            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::CommonCopyLink))
                                 .with_on_select_action(DriveIndexAction::CopyObjectLinkToClipboard(
                                     object_link,
                                 ))
@@ -4585,9 +4586,9 @@ impl DriveIndex {
                         let workflow: Option<&CloudWorkflow> = object.into();
                         let workflow = workflow.expect("Object is workflow");
                         let label = if workflow.model().data.is_agent_mode_workflow() {
-                            "Copy prompt"
+                            I18n::as_ref(app).tr(I18nKey::CommonCopyPrompt)
                         } else {
-                            "Copy workflow text"
+                            I18n::as_ref(app).tr(I18nKey::CommonCopyWorkflowText)
                         };
                         menu_items.push(
                             MenuItemFields::new(label)
@@ -4676,7 +4677,7 @@ impl DriveIndex {
                     )) => {
                         if let Some(object_link) = object.object_link() {
                             menu_items.push(
-                                MenuItemFields::new("Copy link")
+                                MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::CommonCopyLink))
                                     .with_on_select_action(
                                         DriveIndexAction::CopyObjectLinkToClipboard(object_link),
                                     )

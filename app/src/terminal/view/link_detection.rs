@@ -2,9 +2,10 @@ use std::ops::Deref;
 
 use serde::{Serialize, Serializer};
 
-use warpui::{platform::Cursor, ViewContext};
+use warpui::{platform::Cursor, AppContext, SingletonEntity, ViewContext};
 
 use crate::{
+    i18n::{I18n, I18nKey},
     send_telemetry_from_ctx,
     server::telemetry::{LinkOpenMethod, TelemetryEvent},
     terminal::{
@@ -60,7 +61,7 @@ impl GridHighlightedLink {
         }
     }
 
-    pub fn tooltip_text(&self) -> &'static str {
+    pub fn tooltip_text(&self, app: &AppContext) -> String {
         match &self {
             #[cfg(feature = "local_fs")]
             GridHighlightedLink::File(file_link)
@@ -70,11 +71,11 @@ impl GridHighlightedLink {
                     .map(|path| path.is_dir())
                     .unwrap_or(false) =>
             {
-                "Open folder"
+                I18n::as_ref(app).tr(I18nKey::CommonOpenFolder)
             }
             #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(_) => "Open file",
-            GridHighlightedLink::Url(_) => "Open link",
+            GridHighlightedLink::File(_) => I18n::as_ref(app).tr(I18nKey::CommonOpenFile),
+            GridHighlightedLink::Url(_) => I18n::as_ref(app).tr(I18nKey::CommonOpenLink),
         }
     }
 }
@@ -153,15 +154,15 @@ pub enum RichContentLink {
 }
 
 impl RichContentLink {
-    pub fn tooltip_text(&self) -> &'static str {
+    pub fn tooltip_text(&self, app: &AppContext) -> String {
         match &self {
             #[cfg(feature = "local_fs")]
             RichContentLink::FilePath { absolute_path, .. } if absolute_path.is_dir() => {
-                "Open folder"
+                I18n::as_ref(app).tr(I18nKey::CommonOpenFolder)
             }
             #[cfg(feature = "local_fs")]
-            RichContentLink::FilePath { .. } => "Open file",
-            RichContentLink::Url(_) => "Open link",
+            RichContentLink::FilePath { .. } => I18n::as_ref(app).tr(I18nKey::CommonOpenFile),
+            RichContentLink::Url(_) => I18n::as_ref(app).tr(I18nKey::CommonOpenLink),
         }
     }
 }

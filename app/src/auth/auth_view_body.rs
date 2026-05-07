@@ -706,6 +706,7 @@ impl AuthViewBody {
                 if !NetworkStatus::as_ref(app).is_online() {
                     let offline_contents = render_offline_contents(
                         appearance,
+                        app,
                         ui_builder,
                         self.mouse_state_handles
                             .learn_more_mouse_state_handle

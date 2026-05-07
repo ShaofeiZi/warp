@@ -2,6 +2,7 @@ use super::{
     editor_text_colors,
     settings_page::{render_input_list, InputListItem},
 };
+use crate::i18n::{I18n, I18nKey};
 use crate::server::server_api::ServerApiProvider;
 use crate::{
     ai::ambient_agents::telemetry::CloudAgentTelemetryEvent,
@@ -1858,10 +1859,10 @@ impl UpdateEnvironmentForm {
         field.finish()
     }
 
-    fn render_repos_field(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_repos_field(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         // Route to appropriate rendering based on dropdown state
         if self.github_dropdown_state.is_loading {
-            self.render_repos_field_loading(appearance)
+            self.render_repos_field_loading(appearance, app)
         } else if self.github_dropdown_state.auth_url.is_some() {
             self.render_repos_field_unauthed(appearance)
         } else if self.github_dropdown_state.load_error_message.is_some() {
@@ -1883,7 +1884,7 @@ impl UpdateEnvironmentForm {
         .finish()
     }
 
-    fn render_repos_field_loading(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_repos_field_loading(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let theme = appearance.theme();
 
         let mut field = Flex::column()
@@ -1906,7 +1907,7 @@ impl UpdateEnvironmentForm {
                     .with_child(
                         Container::new(
                             Text::new(
-                                "Loading...",
+                                I18n::as_ref(app).tr(I18nKey::CommonLoading),
                                 appearance.ui_font_family(),
                                 appearance.ui_font_size(),
                             )
@@ -3500,7 +3501,7 @@ impl View for UpdateEnvironmentForm {
         ));
 
         page.add_child(self.render_description_field(appearance, app));
-        page.add_child(self.render_repos_field(appearance));
+        page.add_child(self.render_repos_field(appearance, app));
         page.add_child(self.render_docker_image_field(appearance));
         page.add_child(self.render_setup_commands_field(appearance));
 

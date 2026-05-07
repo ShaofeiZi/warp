@@ -13,6 +13,7 @@ use warpui::{
     ViewContext,
 };
 
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     appearance::Appearance,
     changelog_model::{ChangelogHeader, ChangelogModel, ChangelogState, Event as ChangelogEvent},
@@ -30,7 +31,6 @@ struct ChangelogMouseStateHandles {
 }
 
 const CHANGELOG_FETCH_ERROR_MSG: &str = "Unable to fetch the latest changelog.";
-const CHANGELOG_LOADING_MSG: &str = "Loading...";
 
 pub struct ChangelogSectionView {
     changelog_model_handle: ModelHandle<ChangelogModel>,
@@ -98,7 +98,7 @@ impl ChangelogSectionView {
             changelog_fetch_error: create_formatted_text_from_string(
                 CHANGELOG_FETCH_ERROR_MSG.to_string(),
             ),
-            changelog_loading: create_formatted_text_from_string(CHANGELOG_LOADING_MSG.to_string()),
+            changelog_loading: create_formatted_text_from_string(I18n::as_ref(ctx).tr(I18nKey::CommonLoading).to_string()),
         }
     }
 

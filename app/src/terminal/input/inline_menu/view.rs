@@ -31,6 +31,8 @@ use warpui::{
     WeakViewHandle,
 };
 
+use crate::i18n::{I18n, I18nKey};
+
 use crate::ai::blocklist::agent_view::{
     agent_view_bg_color, AgentViewController, AgentViewControllerEvent,
 };
@@ -999,7 +1001,7 @@ impl<A: InlineMenuAction, T: 'static + Send + Sync> View for InlineMenuView<A, T
         let content: Box<dyn Element>;
         if self.result_renderers.is_empty() {
             content = if self.mixer.as_ref(app).is_loading() {
-                self.render_no_results_state("Loading...".into(), app)
+                self.render_no_results_state(I18n::as_ref(app).tr(I18nKey::CommonLoading).into(), app)
             } else {
                 self.render_no_results_state("No results".into(), app)
             };

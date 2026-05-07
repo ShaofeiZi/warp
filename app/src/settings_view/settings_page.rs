@@ -1265,7 +1265,7 @@ pub(super) enum PageType<V: warpui::View> {
     /// handle and render their own scrollable elements.
     Monolith {
         widget: Box<dyn SettingsWidget<View = V>>,
-        title: Option<&'static str>,
+        title: Option<SettingsText>,
         filter: bool,
         vertical_scroll_state: Option<ClippedScrollStateHandle>,
         horizontal_scroll_state: Option<ClippedScrollStateHandle>,
@@ -1274,7 +1274,7 @@ pub(super) enum PageType<V: warpui::View> {
     /// A page which is a series of [`SettingsWidget`]s that don't fall under sub-categories.
     Uncategorized {
         widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
-        title: Option<&'static str>,
+        title: Option<SettingsText>,
         filter: Vec<usize>,
         vertical_scroll_state: ClippedScrollStateHandle,
         horizontal_scroll_state: ClippedScrollStateHandle,
@@ -1284,7 +1284,7 @@ pub(super) enum PageType<V: warpui::View> {
     /// A page which is a series of [`SettingsWidget`]s that fall under sub-categories.
     Categorized {
         categories: Vec<Category<V>>,
-        title: Option<&'static str>,
+        title: Option<SettingsText>,
         filter: Vec<Vec<usize>>,
         vertical_scroll_state: ClippedScrollStateHandle,
         horizontal_scroll_state: ClippedScrollStateHandle,
@@ -1357,7 +1357,7 @@ impl<V: warpui::View> PageType<V> {
         Self::Monolith {
             filter: true,
             widget: Box::new(widget),
-            title,
+            title: title.map(SettingsText::Static),
             vertical_scroll_state,
             horizontal_scroll_state,
             min_page_width: MIN_PAGE_WIDTH,
@@ -1372,7 +1372,22 @@ impl<V: warpui::View> PageType<V> {
         Self::Uncategorized {
             filter: widgets.iter().enumerate().map(|(i, _)| i).collect(),
             widgets,
-            title,
+            title: title.map(SettingsText::Static),
+            vertical_scroll_state: Default::default(),
+            horizontal_scroll_state: Default::default(),
+            highlighted_widget_id: Default::default(),
+            min_page_width: MIN_PAGE_WIDTH,
+        }
+    }
+
+    pub(super) fn new_uncategorized_i18n(
+        widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
+        title: I18nKey,
+    ) -> Self {
+        Self::Uncategorized {
+            filter: widgets.iter().enumerate().map(|(i, _)| i).collect(),
+            widgets,
+            title: Some(SettingsText::I18n(title)),
             vertical_scroll_state: Default::default(),
             horizontal_scroll_state: Default::default(),
             highlighted_widget_id: Default::default(),
@@ -1398,7 +1413,7 @@ impl<V: warpui::View> PageType<V> {
                 })
                 .collect(),
             categories,
-            title,
+            title: title.map(SettingsText::Static),
             vertical_scroll_state: Default::default(),
             horizontal_scroll_state: Default::default(),
             highlighted_widget_id: Default::default(),
@@ -1644,7 +1659,11 @@ impl<V: warpui::View> PageType<V> {
                     if widget.should_render(app) {
                         if let Some(title) = title {
                             let col = Flex::column()
-                                .with_child(render_page_title(title, HEADER_FONT_SIZE, appearance))
+                                .with_child(render_page_title(
+                                    &title.render(app),
+                                    HEADER_FONT_SIZE,
+                                    appearance,
+                                ))
                                 .with_child(widget.render_widget(view, false, appearance, app));
                             page = col.finish();
                         } else {
@@ -1662,7 +1681,11 @@ impl<V: warpui::View> PageType<V> {
             } => {
                 let mut page = Flex::column();
                 if let Some(title) = title {
-                    page.add_child(render_page_title(title, HEADER_FONT_SIZE, appearance));
+                    page.add_child(render_page_title(
+                        &title.render(app),
+                        HEADER_FONT_SIZE,
+                        appearance,
+                    ));
                 }
                 for widget in widgets {
                     let highlighted =
@@ -1681,7 +1704,11 @@ impl<V: warpui::View> PageType<V> {
             } => {
                 let mut page = Flex::column();
                 if let Some(title) = title {
-                    page.add_child(render_page_title(title, HEADER_FONT_SIZE, appearance));
+                    page.add_child(render_page_title(
+                        &title.render(app),
+                        HEADER_FONT_SIZE,
+                        appearance,
+                    ));
                 }
                 let num_categories = categories.len();
                 for (i, category) in categories.into_iter().enumerate() {
@@ -1846,20 +1873,20 @@ impl From<I18nKey> for SettingsText {
 pub(super) enum FilteredPageType<'a, V: warpui::View> {
     Monolith {
         widget: Option<&'a dyn SettingsWidget<View = V>>,
-        title: Option<&'static str>,
+        title: Option<SettingsText>,
         vertical_scroll_state: Option<ClippedScrollStateHandle>,
         horizontal_scroll_state: Option<ClippedScrollStateHandle>,
     },
     Uncategorized {
         widgets: Vec<&'a dyn SettingsWidget<View = V>>,
-        title: Option<&'static str>,
+        title: Option<SettingsText>,
         vertical_scroll_state: ClippedScrollStateHandle,
         horizontal_scroll_state: ClippedScrollStateHandle,
         highlighted_widget_id: Option<&'static str>,
     },
     Categorized {
         categories: Vec<FilteredCategory<'a, V>>,
-        title: Option<&'static str>,
+        title: Option<SettingsText>,
         vertical_scroll_state: ClippedScrollStateHandle,
         horizontal_scroll_state: ClippedScrollStateHandle,
         highlighted_widget_id: Option<&'static str>,
@@ -1896,6 +1923,7 @@ impl<V: warpui::View> Category<V> {
         }
     }
 
+    #[allow(dead_code)]
     pub(super) fn with_subtitle(mut self, subtitle: &'static str) -> Self {
         self.subtitle = Some(SettingsText::Static(subtitle));
         self

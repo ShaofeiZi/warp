@@ -15,6 +15,7 @@ use url::Url;
 use crate::{
     ai::{blocklist::secret_redaction::find_secrets_in_text, AIRequestUsageModel},
     appearance::Appearance,
+    i18n::{I18n, I18nKey},
     auth::{auth_state::AuthState, AuthStateProvider, UserUid},
     cloud_object::{
         breadcrumbs::ContainingObject,
@@ -180,7 +181,6 @@ const BUTTON_HEIGHT: f32 = 32.;
 
 const AI_ASSIST_BUTTON_SIZE: f32 = 92.;
 const AI_ASSIST_BUTTON_TEXT: &str = "Autofill";
-const AI_ASSIST_LOADING_TEXT: &str = "Loading";
 
 const ALIAS_HELP_TEXT: &str = "Aliases allow you to create short strings to execute workflows. Each alias can have different argument values and environment variables, and aliases are personal to you.";
 
@@ -2430,8 +2430,8 @@ impl WorkflowView {
         let mut button_row = Flex::row();
 
         let label_and_icon = match self.ai_metadata_assist_state {
-            AiAssistState::PreRequest => Some((AI_ASSIST_BUTTON_TEXT, Icon::AiAssistant)),
-            AiAssistState::RequestInFlight => Some((AI_ASSIST_LOADING_TEXT, Icon::Refresh)),
+            AiAssistState::PreRequest => Some((AI_ASSIST_BUTTON_TEXT.to_string(), Icon::AiAssistant)),
+            AiAssistState::RequestInFlight => Some((I18n::as_ref(app).tr(I18nKey::CommonLoading), Icon::Refresh)),
             AiAssistState::Generated => None,
         };
 
@@ -3201,7 +3201,7 @@ impl BackingView for WorkflowView {
         // Add "Copy Link" to menu
         if let Some(link) = self.workflow_link(ctx) {
             menu_items.push(
-                MenuItemFields::new("Copy link")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyLink))
                     .with_on_select_action(WorkflowAction::CopyLink(link))
                     .with_icon(Icon::Link)
                     .into_item(),

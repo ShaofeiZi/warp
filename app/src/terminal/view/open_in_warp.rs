@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
 };
 
+use crate::i18n::{I18n, I18nKey};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use warp_util::path::EscapeChar;
@@ -231,6 +232,7 @@ impl TerminalView {
     pub fn open_in_warp_banner_accessibility_content(
         &self,
         action: OpenInWarpBannerAction,
+        ctx: &mut ViewContext<Self>,
     ) -> ActionAccessibilityContent {
         match action {
             OpenInWarpBannerAction::OpenFile => {
@@ -252,7 +254,7 @@ impl TerminalView {
             }
             OpenInWarpBannerAction::LearnMore => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new(
-                    "Learn more",
+                    I18n::as_ref(ctx).tr(I18nKey::CommonLearnMore),
                     "Learn more about opening Markdown files in Warp",
                     WarpA11yRole::UserAction,
                 ))

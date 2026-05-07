@@ -1,6 +1,7 @@
 use serde::Serialize;
-use warpui::{elements::MouseStateHandle, notification::RequestPermissionsOutcome, Element};
+use warpui::{elements::MouseStateHandle, notification::RequestPermissionsOutcome, AppContext, Element, SingletonEntity};
 
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     appearance::Appearance,
     terminal::{
@@ -44,11 +45,12 @@ pub fn render_inline_notifications_discovery_banner(
     state: &NotificationsDiscoveryBannerState,
     notifications_mode: NotificationsMode,
     appearance: &Appearance,
+    app: &AppContext,
 ) -> Box<dyn Element> {
     let active_ui_text_color = appearance.theme().active_ui_text_color().into_solid();
 
     let learn_more_button = InlineBannerTextButton {
-        text: "Learn more".to_string(),
+        text: I18n::as_ref(app).tr(I18nKey::CommonLearnMore),
         text_color: active_ui_text_color,
         button_state: InlineBannerButtonState {
             on_click_event: TerminalAction::NotificationsDiscoveryBanner(

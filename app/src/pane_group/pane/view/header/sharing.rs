@@ -8,7 +8,7 @@ use warpui::{
     elements::{MouseStateHandle, ParentElement},
     platform::Cursor,
     ui_components::components::UiComponent,
-    AppContext, Element, ViewContext, ViewHandle,
+    AppContext, Element, SingletonEntity, ViewContext, ViewHandle,
 };
 
 use warp_core::ui::theme::Fill;
@@ -19,6 +19,7 @@ use crate::{
         dialog::{SharingDialog, SharingDialogEvent},
         ContentEditability, ShareableObject,
     },
+    i18n::{I18n, I18nKey},
     pane_group::BackingView,
     server::telemetry::SharingDialogSource,
     ui_components::buttons::{icon_button, icon_button_with_color},
@@ -189,7 +190,11 @@ impl<P: BackingView> PaneHeader<P> {
                     "Share".to_string(),
                 )
             } else {
-                (Icon::Link, false, "Copy link".to_string())
+                (
+                    Icon::Link,
+                    false,
+                    I18n::as_ref(app).tr(I18nKey::CommonCopyLink),
+                )
             };
 
         let ui_builder = appearance.ui_builder().clone();

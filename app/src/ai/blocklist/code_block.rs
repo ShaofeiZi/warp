@@ -3,6 +3,7 @@ use crate::ai::blocklist::inline_action::inline_action_header::{
 };
 use crate::ai::blocklist::inline_action::inline_action_icons::icon_size;
 use crate::code::editor_management::CodeSource;
+use crate::i18n::{I18n, I18nKey};
 use crate::search::files::icon::icon_from_file_path;
 use crate::search::ItemHighlightState;
 use std::iter;
@@ -190,6 +191,7 @@ fn render_linked_code_block_internal(
     insert_text: Option<String>,
     mouse_handles: Option<CodeSnippetButtonHandles>,
     appearance: &Appearance,
+    app: &AppContext,
 ) -> Flex {
     let theme = appearance.theme();
     let mut content = Flex::column().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
@@ -256,7 +258,7 @@ fn render_linked_code_block_internal(
             let open_button = render_button(
                 appearance,
                 Icon::LinkExternal,
-                "Open in Warp",
+                &I18n::as_ref(app).tr(I18nKey::CommonOpenInWarp),
                 mouse_handles.open_button,
                 code_clone.clone(),
                 on_open,
@@ -456,6 +458,7 @@ fn render_code_block_internal(
                 formatted_insert_text,
                 mouse_handles,
                 appearance,
+                app,
             )
         }
         _ => render_plain_code_block_internal(

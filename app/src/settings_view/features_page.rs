@@ -1,5 +1,6 @@
 use crate::default_terminal::DefaultTerminal;
 use crate::gpu_state::{GPUState, GPUStateEvent};
+use crate::i18n::{I18n, I18nKey};
 use crate::terminal::input::OPEN_COMPLETIONS_KEYBINDING_NAME;
 #[cfg(feature = "local_tty")]
 use crate::terminal::session_settings::WorkingDirectoryConfig;
@@ -298,7 +299,7 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
 
     if !FeatureFlag::SSHTmuxWrapper.is_enabled() {
         toggle_binding_pairs.push(ToggleSettingActionPair::new(
-            "Warp SSH wrapper",
+            &I18n::as_ref(app).tr(I18nKey::CommonWarpSshWrapper),
             builder(SettingsAction::FeaturesPageToggle(
                 #[allow(deprecated)]
                 FeaturesPageAction::ToggleSshWrapper,
@@ -310,7 +311,7 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
     }
 
     toggle_binding_pairs.push(ToggleSettingActionPair::new(
-        "show tooltip on click on links",
+        &I18n::as_ref(app).tr(I18nKey::CommonShowTooltipOnClickOnLinks),
         builder(SettingsAction::FeaturesPageToggle(
             FeaturesPageAction::ToggleLinkTooltip,
         )),
@@ -694,15 +695,16 @@ fn max_max_grid_size() -> usize {
     }
 }
 
-fn block_maximum_rows_description() -> String {
+fn block_maximum_rows_description(app: &AppContext) -> String {
     let max_rows = if ChannelState::enable_debug_features() {
         "10 million"
     } else {
         "1 million"
     };
 
-    format!(
-        "Setting the limit above 100k lines may impact performance. Maximum rows supported is {max_rows}."
+    I18n::as_ref(app).tr_args(
+        I18nKey::SettingsFeaturesMaximumRowsDescription,
+        &[("max_rows", max_rows)],
     )
 }
 
@@ -2751,18 +2753,27 @@ impl FeaturesPageView {
         }
 
         let categories = vec![
-            Category::new("General", general_widgets),
-            Category::new("Session", session_widgets),
-            Category::new("Keys", keys_widgets),
-            Category::new("Text Editing", text_editing_widgets),
-            Category::new("Terminal Input", editor_widgets),
-            Category::new("Terminal", terminal_widgets),
-            Category::new("Notifications", notifications_widgets),
-            Category::new(
-                "Workflows",
+            Category::new_i18n(I18nKey::SettingsFeaturesCategoryGeneral, general_widgets),
+            Category::new_i18n(I18nKey::SettingsFeaturesCategorySession, session_widgets),
+            Category::new_i18n(I18nKey::SettingsFeaturesCategoryKeys, keys_widgets),
+            Category::new_i18n(
+                I18nKey::SettingsFeaturesCategoryTextEditing,
+                text_editing_widgets,
+            ),
+            Category::new_i18n(
+                I18nKey::SettingsFeaturesCategoryTerminalInput,
+                editor_widgets,
+            ),
+            Category::new_i18n(I18nKey::SettingsFeaturesCategoryTerminal, terminal_widgets),
+            Category::new_i18n(
+                I18nKey::SettingsFeaturesCategoryNotifications,
+                notifications_widgets,
+            ),
+            Category::new_i18n(
+                I18nKey::SettingsFeaturesCategoryWorkflows,
                 vec![Box::new(WorkflowsInCommandSearch::default())],
             ),
-            Category::new("System", system_widgets),
+            Category::new_i18n(I18nKey::SettingsFeaturesCategorySystem, system_widgets),
         ];
 
         PageType::new_categorized(categories, None)
@@ -4260,7 +4271,7 @@ impl SettingsWidget for SessionRestorationWidget {
             .finish();
 
         let labeled_switch = render_body_item::<FeaturesPageAction>(
-            "Restore windows, tabs, and panes on startup".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesRestoreSession),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(
@@ -4286,7 +4297,7 @@ impl SettingsWidget for SessionRestorationWidget {
 
         if app.is_wayland() {
             let message = Text::new_inline(
-                "Window positions won't be restored on Wayland. ",
+                I18n::as_ref(app).tr(I18nKey::SettingsFeaturesSessionRestoreWaylandWarning),
                 appearance.ui_font_family(),
                 CONTENT_FONT_SIZE,
             )
@@ -4295,7 +4306,7 @@ impl SettingsWidget for SessionRestorationWidget {
 
             let link = ui_builder
                 .link(
-                    "See docs.".to_owned(),
+                    I18n::as_ref(app).tr(I18nKey::SettingsFeaturesSeeDocs),
                     Some("https://docs.warp.dev/terminal/sessions/session-restoration".to_owned()),
                     None,
                     self.docs_link.clone(),
@@ -4345,7 +4356,7 @@ impl SettingsWidget for SnackbarHeaderWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Show sticky command header".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesStickyCommandHeader),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(
@@ -4398,7 +4409,7 @@ impl SettingsWidget for LinkTooltipWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Show tooltip on click on links".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesLinkTooltip),
             None,
             LocalOnlyIconState::for_setting(
                 LinkTooltip::storage_key(),
@@ -4467,7 +4478,7 @@ impl SettingsWidget for QuitWarningModalWidget {
         let general_settings = GeneralSettings::as_ref(app);
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Show warning before quitting/logging out".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesQuitWarning),
             None,
             LocalOnlyIconState::for_setting(
                 ShowWarningBeforeQuitting::storage_key(),
@@ -4514,11 +4525,11 @@ impl SettingsWidget for LoginItemWidget {
         let general_settings = GeneralSettings::as_ref(app);
         let ui_builder = appearance.ui_builder();
         #[cfg(target_os = "macos")]
-        let label = "Start Warp at login (requires macOS 13+)";
+        let label = I18n::as_ref(app).tr(I18nKey::SettingsFeaturesStartWarpAtLoginMacos13);
         #[cfg(not(target_os = "macos"))]
-        let label = "Start Warp at login";
+        let label = I18n::as_ref(app).tr(I18nKey::SettingsFeaturesStartWarpAtLogin);
         render_body_item::<FeaturesPageAction>(
-            label.into(),
+            label,
             None,
             LocalOnlyIconState::for_setting(
                 LoginItem::storage_key(),
@@ -4565,7 +4576,7 @@ impl SettingsWidget for QuitWhenAllWindowsClosedWidget {
         let general_settings = GeneralSettings::as_ref(app);
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Quit when all windows are closed".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesQuitWhenAllWindowsClosed),
             None,
             LocalOnlyIconState::for_setting(
                 QuitOnLastWindowClosed::storage_key(),
@@ -4612,7 +4623,7 @@ impl SettingsWidget for ShowChangelogWidget {
         let changelog_settings = ChangelogSettings::as_ref(app);
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Show changelog toast after updates".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesShowChangelogToast),
             None,
             LocalOnlyIconState::for_setting(
                 ShowChangelogAfterUpdate::storage_key(),
@@ -4685,7 +4696,10 @@ impl SettingsWidget for MouseScrollMultiplierWidget {
                 } else {
                     appearance
                         .ui_builder()
-                        .wrappable_text("Allowed Values: 1-20", true)
+                        .wrappable_text(
+                            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesMouseScrollAllowedValues),
+                            true,
+                        )
                         .with_style(UiComponentStyles {
                             font_color: Some(themes::theme::Fill::error().into_solid()),
                             ..Default::default()
@@ -4698,13 +4712,13 @@ impl SettingsWidget for MouseScrollMultiplierWidget {
             .finish();
 
         render_body_item::<FeaturesPageAction>(
-            "Lines scrolled by mouse wheel interval".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesMouseScrollLines),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: None,
                 secondary_text: None,
                 tooltip_override_text: Some(
-                    "Supports floating point values between 1 and 20.".to_string(),
+                    I18n::as_ref(app).tr(I18nKey::SettingsFeaturesMouseScrollTooltip),
                 ),
             }),
             LocalOnlyIconState::for_setting(
@@ -4793,7 +4807,10 @@ impl SettingsWidget for DefaultTerminalWidget {
         let default_terminal = DefaultTerminal::as_ref(app);
         if default_terminal.is_warp_default() {
             ui_builder
-                .wrappable_text("Warp is the default terminal", true)
+                .wrappable_text(
+                    I18n::as_ref(app).tr(I18nKey::SettingsFeaturesWarpIsDefaultTerminal),
+                    true,
+                )
                 .with_style(UiComponentStyles {
                     font_color: Some(appearance.theme().disabled_ui_text_color().into()),
                     margin: Some(Coords::default().bottom(16.)),
@@ -4804,7 +4821,7 @@ impl SettingsWidget for DefaultTerminalWidget {
         } else {
             ui_builder
                 .link(
-                    "Make Warp the default terminal".to_string(),
+                    I18n::as_ref(app).tr(I18nKey::SettingsFeaturesMakeWarpDefaultTerminal),
                     None,
                     Some(Box::new(|ctx| {
                         ctx.dispatch_typed_action(FeaturesPageAction::MakeWarpDefaultTerminal);
@@ -4857,7 +4874,7 @@ impl SettingsWidget for BlockLimitWidget {
             .finish();
 
         render_body_item::<FeaturesPageAction>(
-            "Maximum rows in a block".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesMaximumRowsInBlock),
             None,
             LocalOnlyIconState::for_setting(
                 MaximumGridSize::storage_key(),
@@ -4871,7 +4888,7 @@ impl SettingsWidget for BlockLimitWidget {
             ToggleState::Enabled,
             appearance,
             input_field,
-            Some(block_maximum_rows_description()),
+            Some(block_maximum_rows_description(app)),
         )
     }
 }
@@ -4897,14 +4914,14 @@ impl SettingsWidget for SSHWrapperWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Warp SSH Wrapper".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesSshWrapper),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(
                     "https://docs.warp.dev/terminal/warpify/ssh-legacy#implementation".into(),
                 )),
                 secondary_text: if view.ssh_wrapper_toggled {
-                    Some("This change will take effect in new sessions".to_string())
+                    Some(I18n::as_ref(app).tr(I18nKey::SettingsFeaturesSshWrapperNewSessionsNotice))
                 } else {
                     None
                 },
@@ -4958,7 +4975,7 @@ impl SettingsWidget for DesktopNotificationsWidget {
         let ui_builder = appearance.ui_builder();
         let mut column = Flex::column();
         column.add_child(render_body_item::<FeaturesPageAction>(
-            "Receive desktop notifications from Warp".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesDesktopNotifications),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(NOTIFICATIONS_DOCS_URL.into())),
@@ -5039,7 +5056,7 @@ impl SettingsWidget for DesktopNotificationsWidget {
             let ai_settings = AISettings::as_ref(app);
             let show_agent_notifications = *ai_settings.show_agent_notifications;
             column.add_child(render_body_item::<FeaturesPageAction>(
-                "Show in-app agent notifications".into(),
+                I18n::as_ref(app).tr(I18nKey::SettingsFeaturesInAppAgentNotifications),
                 None,
                 LocalOnlyIconState::Hidden,
                 ToggleState::Enabled,
@@ -5143,7 +5160,7 @@ impl SettingsWidget for StartupShellWidget {
             .with_children([
                 render_sub_sub_header(
                     appearance,
-                    "Default shell for new sessions".to_string(),
+                    I18n::as_ref(app).tr(I18nKey::SettingsFeaturesDefaultShellNewSessions),
                     Some(LocalOnlyIconState::for_setting(
                         StartupShellOverride::storage_key(),
                         StartupShellOverride::sync_to_cloud(),
@@ -5182,7 +5199,7 @@ impl SettingsWidget for WorkingDirectoryWidget {
             .with_children([
                 render_sub_sub_header(
                     appearance,
-                    "Working directory for new sessions".to_string(),
+                    I18n::as_ref(app).tr(I18nKey::SettingsFeaturesWorkingDirectoryNewSessions),
                     Some(LocalOnlyIconState::for_setting(
                         WorkingDirectoryConfig::storage_key(),
                         WorkingDirectoryConfig::sync_to_cloud(),
@@ -5240,7 +5257,7 @@ impl SettingsWidget for ConfirmCloseSharedSessionWidget {
         let ui_builder = appearance.ui_builder();
         let session_settings = SessionSettings::as_ref(app);
         render_body_item::<FeaturesPageAction>(
-            "Confirm before closing shared session".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesConfirmCloseSharedSession),
             None,
             LocalOnlyIconState::for_setting(
                 ShouldConfirmCloseSession::storage_key(),
@@ -5372,7 +5389,7 @@ impl SettingsWidget for GlobalHotkeyWidget {
                             .finish(),
                         ui_builder
                             .link(
-                                "See docs.".to_owned(),
+                                I18n::as_ref(app).tr(I18nKey::SettingsFeaturesSeeDocs),
                                 Some(
                                     "https://docs.warp.dev/terminal/windows/global-hotkey"
                                         .to_owned(),
@@ -5996,7 +6013,7 @@ impl SettingsWidget for SlashCommandsInTerminalModeWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Enable slash commands in terminal mode".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesSlashCommandsTerminal),
             None,
             LocalOnlyIconState::for_setting(
                 EnableSlashCommandsInTerminal::storage_key(),
@@ -6048,7 +6065,7 @@ impl SettingsWidget for OutlineCodebaseSymbolsForAtContextMenuWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Outline codebase symbols for '@' context menu".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesOutlineCodebaseAtContext),
             None,
             LocalOnlyIconState::for_setting(
                 OutlineCodebaseSymbolsForAtContextMenu::storage_key(),
@@ -6100,7 +6117,7 @@ impl SettingsWidget for ShowTerminalInputMessageLineWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Show terminal input message line".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesTerminalInputMessageLine),
             None,
             LocalOnlyIconState::for_setting(
                 ShowTerminalInputMessageBar::storage_key(),
@@ -6439,7 +6456,7 @@ impl SettingsWidget for MouseReportingWidget {
         let reporting_settings = AltScreenReporting::as_ref(app);
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Enable Mouse Reporting".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesMouseReporting),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(
@@ -6494,7 +6511,7 @@ impl SettingsWidget for ScrollReportingWidget {
         let reporting_settings = AltScreenReporting::as_ref(app);
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Enable Scroll Reporting".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesScrollReporting),
             None,
             LocalOnlyIconState::for_setting(
                 ScrollReportingEnabled::storage_key(),
@@ -6552,7 +6569,7 @@ impl SettingsWidget for FocusReportingWidget {
         let reporting_settings = AltScreenReporting::as_ref(app);
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Enable Focus Reporting".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesFocusReporting),
             None,
             LocalOnlyIconState::for_setting(
                 FocusReportingEnabled::storage_key(),
@@ -6599,7 +6616,7 @@ impl SettingsWidget for AudibleBellWidget {
         let ui_builder = appearance.ui_builder();
         let terminal_settings = TerminalSettings::as_ref(app);
         render_body_item::<FeaturesPageAction>(
-            "Use Audible Bell".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesAudibleBell),
             None,
             LocalOnlyIconState::for_setting(
                 UseAudibleBell::storage_key(),
@@ -6704,7 +6721,7 @@ impl SettingsWidget for SmartSelectWidget {
         let selection = SemanticSelection::as_ref(app);
         let mut column = Flex::column();
         column.add_child(render_body_item::<FeaturesPageAction>(
-            "Double-click smart selection".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesSmartSelection),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(
@@ -6822,7 +6839,7 @@ impl SettingsWidget for CopyOnSelectWidget {
         let ui_builder = appearance.ui_builder();
         let copy_on_select_enabled = SelectionSettings::as_ref(app).copy_on_select_enabled();
         render_body_item::<FeaturesPageAction>(
-            "Copy on select".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesCopyOnSelect),
             None,
             LocalOnlyIconState::for_setting(
                 CopyOnSelect::storage_key(),
@@ -6866,7 +6883,9 @@ impl SettingsWidget for NewTabPlacementWidget {
     ) -> Box<dyn Element> {
         render_dropdown_item(
             appearance,
-            "New tab placement",
+            I18n::as_ref(app)
+                .tr(I18nKey::SettingsFeaturesNewTabPlacement)
+                .as_str(),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -6901,7 +6920,7 @@ impl SettingsWidget for DefaultSessionModeWidget {
         app: &AppContext,
     ) -> Box<dyn Element> {
         let label = render_dropdown_item_label(
-            "Default mode for new sessions".to_string(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesDefaultModeForNewSessions),
             None,
             LocalOnlyIconState::for_setting(
                 DefaultSessionMode::storage_key(),
@@ -6955,7 +6974,7 @@ impl SettingsWidget for WorkflowsInCommandSearch {
         let ui_builder = appearance.ui_builder();
         let workflow_settings = CommandSearchSettings::as_ref(app);
         render_body_item::<FeaturesPageAction>(
-            "Show Global Workflows in Command Search (ctrl-r)".into(),
+            I18n::as_ref(app).tr(I18nKey::SettingsFeaturesGlobalWorkflowsSearch),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(

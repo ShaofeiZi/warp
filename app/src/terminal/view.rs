@@ -131,6 +131,7 @@ use crate::code_review::git_status_update::{
     GitRepoStatusModel, GitStatusMetadata, GitStatusUpdateModel,
 };
 use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
+use crate::i18n::{I18n, I18nKey};
 use crate::projects::ProjectManagementModel;
 use crate::remote_server::manager::{
     RemoteServerInitPhase, RemoteServerManager, RemoteServerManagerEvent,
@@ -15341,7 +15342,7 @@ impl TerminalView {
                         };
                         path.map(|path| {
                             let mut items = vec![
-                                MenuItemFields::new("Copy path")
+                                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyPath))
                                     .with_on_select_action(TerminalAction::ContextMenu(
                                         ContextMenuAction::CopyUrl {
                                             url_content: path.to_string_lossy().into(),
@@ -15357,14 +15358,14 @@ impl TerminalView {
 
                             if is_markdown_file(&path) {
                                 items.push(
-                                    MenuItemFields::new("Open in Warp")
+                                    MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonOpenInWarp))
                                         .with_on_select_action(TerminalAction::OpenFileInWarp(path))
                                         .into_item(),
                                 );
                                 // Because the default for cmd-click is to open in Warp, we also
                                 // have an open-in-editor option.
                                 items.push(
-                                    MenuItemFields::new("Open in editor")
+                                    MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonOpenInEditor))
                                         .with_on_select_action(TerminalAction::OpenGridLink(
                                             highlighted_link.clone(),
                                         ))
@@ -15450,25 +15451,25 @@ impl TerminalView {
                     .is_active_and_long_running();
 
                 let copy_commands_str = if is_single_selection {
-                    "Copy command"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonCopyCommand)
                 } else {
-                    "Copy commands"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonCopyCommands)
                 };
-                let copy_str = "Copy";
+                let copy_str = I18n::as_ref(ctx).tr(I18nKey::CommonCopy);
                 let find_str = if is_single_selection {
-                    "Find within block"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonFindWithinBlock)
                 } else {
-                    "Find within blocks"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonFindWithinBlocks)
                 };
                 let scroll_to_top_str = if is_single_selection {
-                    "Scroll to top of block"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonScrollToTopOfBlock)
                 } else {
-                    "Scroll to top of blocks"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonScrollToTopOfBlocks)
                 };
                 let scroll_to_bottom_str = if is_single_selection {
-                    "Scroll to bottom of block"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonScrollToBottomOfBlock)
                 } else {
-                    "Scroll to bottom of blocks"
+                    I18n::as_ref(ctx).tr(I18nKey::CommonScrollToBottomOfBlocks)
                 };
 
                 // currently, we don't support share for multi selections
@@ -15535,15 +15536,17 @@ impl TerminalView {
                             .block_at(tail_block_index)
                             .is_none_or(|b| b.is_restored());
 
-                    items.extend(
-                        self.session_sharing_context_menu_items(&model, is_share_session_disabled),
-                    );
+                    items.extend(self.session_sharing_context_menu_items(
+                        &model,
+                        is_share_session_disabled,
+                        ctx,
+                    ));
                 }
 
                 if WarpDriveSettings::is_warp_drive_enabled(ctx) {
                     items.push(MenuItem::Separator);
                     items.push(
-                        MenuItemFields::new("Save as workflow")
+                        MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonSaveAsWorkflow))
                             .with_on_select_action(TerminalAction::ContextMenu(
                                 ContextMenuAction::OpenWorkflowModal,
                             ))
@@ -15590,7 +15593,8 @@ impl TerminalView {
                 }
 
                 if is_single_selection {
-                    let mut copy_output_menu_item = MenuItemFields::new("Copy output")
+                    let mut copy_output_menu_item =
+                        MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyOutput))
                         .with_on_select_action(TerminalAction::ContextMenu(
                             ContextMenuAction::CopyBlockOutputs,
                         ))
@@ -15601,7 +15605,9 @@ impl TerminalView {
                     if tail_block.has_active_filter() {
                         items.insert(
                             1,
-                            MenuItemFields::new("Copy filtered output")
+                            MenuItemFields::new(
+                                I18n::as_ref(ctx).tr(I18nKey::CommonCopyFilteredOutput),
+                            )
                                 .with_on_select_action(TerminalAction::ContextMenu(
                                     ContextMenuAction::CopyBlockFilteredOutputs,
                                 ))
@@ -15623,6 +15629,7 @@ impl TerminalView {
                         self.input_is_on_git_branch(&model),
                         self.is_rprompt_shown(&model),
                         PromptPosition::Block(tail_block_index),
+                        ctx,
                     );
                     items.push(MenuItem::Separator);
                     items.append(&mut prompt_items);
@@ -15640,7 +15647,9 @@ impl TerminalView {
                         ))
                         .into_item(),
                 ]);
-                items.append(&mut vec![MenuItemFields::new("Toggle block filter")
+                items.append(&mut vec![MenuItemFields::new(
+                    I18n::as_ref(ctx).tr(I18nKey::CommonToggleBlockFilter),
+                )
                     .with_on_select_action(TerminalAction::ToggleBlockFilterOnSelectedOrLastBlock(
                         ToggleBlockFilterSource::ContextMenu,
                     ))
@@ -15649,7 +15658,9 @@ impl TerminalView {
                         ctx,
                     ))
                     .into_item()]);
-                items.append(&mut vec![MenuItemFields::new("Toggle bookmark")
+                items.append(&mut vec![MenuItemFields::new(
+                    I18n::as_ref(ctx).tr(I18nKey::CommonToggleBookmark),
+                )
                     .with_on_select_action(TerminalAction::ContextMenu(
                         ContextMenuAction::ToggleBookmark,
                     ))
@@ -15739,7 +15750,7 @@ impl TerminalView {
                 if FeatureFlag::CreatingSharedSessions.is_enabled()
                     && ContextFlag::CreateSharedSession.is_enabled()
                 {
-                    items.extend(self.session_sharing_context_menu_items(&model, false));
+                    items.extend(self.session_sharing_context_menu_items(&model, false, ctx));
                 }
 
                 items
@@ -15869,8 +15880,9 @@ impl TerminalView {
         is_on_git_branch: bool,
         is_rprompt_shown: bool,
         position: PromptPosition,
+        ctx: &AppContext,
     ) -> Vec<MenuItem<TerminalAction>> {
-        let mut items = vec![MenuItemFields::new("Copy prompt")
+        let mut items = vec![MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyPrompt))
             .with_on_select_action(TerminalAction::ContextMenu(ContextMenuAction::CopyPrompt {
                 position,
                 part: PromptPart::EntirePrompt,
@@ -15879,7 +15891,7 @@ impl TerminalView {
 
         if is_rprompt_shown {
             items.push(
-                MenuItemFields::new("Copy right prompt")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyRightPrompt))
                     .with_on_select_action(TerminalAction::ContextMenu(
                         ContextMenuAction::CopyRprompt,
                     ))
@@ -15888,7 +15900,7 @@ impl TerminalView {
         }
 
         items.push(
-            MenuItemFields::new("Copy working directory")
+            MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyWorkingDirectory))
                 .with_on_select_action(TerminalAction::ContextMenu(ContextMenuAction::CopyPrompt {
                     position,
                     part: PromptPart::Pwd,
@@ -15965,7 +15977,7 @@ impl TerminalView {
             );
 
             items.push(
-                MenuItemFields::new("Close pane")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonClosePane))
                     .with_on_select_action(TerminalAction::Close)
                     .with_key_shortcut_label(
                         custom_tag_to_keystroke(CustomAction::CloseCurrentSession.into())
@@ -16014,7 +16026,7 @@ impl TerminalView {
     }
 
     fn prompt_context_menu_items(&self, ctx: &AppContext) -> Vec<MenuItem<TerminalAction>> {
-        let copy_prompt = MenuItemFields::new("Copy prompt")
+        let copy_prompt = MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyPrompt))
             .with_on_select_action(TerminalAction::ContextMenu(ContextMenuAction::CopyPrompt {
                 position: PromptPosition::Input,
                 part: PromptPart::EntirePrompt,
@@ -16060,7 +16072,7 @@ impl TerminalView {
             let mut items = vec![copy_prompt];
             if self.is_rprompt_shown(&self.model.lock()) {
                 items.push(
-                    MenuItemFields::new("Copy right prompt")
+                    MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyRightPrompt))
                         .with_on_select_action(TerminalAction::ContextMenu(
                             ContextMenuAction::CopyRprompt,
                         ))
@@ -16164,7 +16176,7 @@ impl TerminalView {
         if FeatureFlag::CreatingSharedSessions.is_enabled()
             && ContextFlag::CreateSharedSession.is_enabled()
         {
-            items.extend(self.session_sharing_context_menu_items(&model, false));
+            items.extend(self.session_sharing_context_menu_items(&model, false, ctx));
         }
 
         // Section 2: AI Command Search, Ask Warp AI
@@ -16211,7 +16223,7 @@ impl TerminalView {
         if !all_current_input_text.is_empty() && WarpDriveSettings::is_warp_drive_enabled(ctx) {
             items.extend([
                 MenuItem::Separator,
-                MenuItemFields::new("Save as workflow")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonSaveAsWorkflow))
                     .with_on_select_action(TerminalAction::InputContextMenuItem(
                         InputContextMenuAction::SaveAsWorkflow,
                     ))
@@ -16402,7 +16414,7 @@ impl TerminalView {
         if FeatureFlag::CreatingSharedSessions.is_enabled()
             && ContextFlag::CreateSharedSession.is_enabled()
         {
-            menu_items.extend(self.session_sharing_context_menu_items(&model, false));
+            menu_items.extend(self.session_sharing_context_menu_items(&model, false, ctx));
         }
         let current_shell = model.shell_launch_state().available_shell();
         let mut pane_context_menu_items = self.pane_context_menu_items(current_shell, ctx);
@@ -16565,12 +16577,12 @@ impl TerminalView {
                     ContextMenuAction::CopyAIBlock { ai_block_view_id },
                 ))
                 .into_item(),
-            MenuItemFields::new("Copy prompt")
+            MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyPrompt))
                 .with_on_select_action(TerminalAction::ContextMenu(
                     ContextMenuAction::CopyAIBlockQuery { ai_block_view_id },
                 ))
                 .into_item(),
-            MenuItemFields::new("Copy output as Markdown")
+            MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyOutputAsMarkdown))
                 .with_on_select_action(TerminalAction::ContextMenu(
                     ContextMenuAction::CopyAIBlockOutput { ai_block_view_id },
                 ))
@@ -16591,7 +16603,7 @@ impl TerminalView {
                 #[cfg(feature = "local_fs")]
                 RichContentLink::FilePath { absolute_path, .. } => {
                     items.push(
-                        MenuItemFields::new("Copy path")
+                        MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyPath))
                             .with_on_select_action(TerminalAction::ContextMenu(
                                 ContextMenuAction::CopyUrl {
                                     url_content: absolute_path.to_string_lossy().into_owned(),
@@ -20990,7 +21002,7 @@ impl TerminalView {
                         "Pure is not yet supported in Warp. You might consider one of the \
                         supported prompts as an alternative.  ",
                     ),
-                    FormattedTextFragment::hyperlink("Learn more", PROMPT_COMPATIBILITY_URL),
+                    FormattedTextFragment::hyperlink(I18n::as_ref(ctx).tr(I18nKey::CommonLearnMore), PROMPT_COMPATIBILITY_URL),
                 ]))
             } else {
                 None
@@ -22179,6 +22191,7 @@ impl TerminalView {
                     state,
                     SessionSettings::as_ref(app).notifications.mode,
                     appearance,
+                    app,
                 ),
             );
         }
@@ -22211,7 +22224,7 @@ impl TerminalView {
         for (banner_id, state) in &self.inline_banners_state.ssh_banners {
             inline_banners.insert(
                 *banner_id,
-                render_inline_ssh_wrapper_banner(state, appearance),
+                render_inline_ssh_wrapper_banner(state, appearance, app),
             );
         }
 
@@ -22288,7 +22301,7 @@ impl TerminalView {
         if let Some(open_in_warp_banner) = &self.inline_banners_state.open_in_warp_banner {
             inline_banners.insert(
                 open_in_warp_banner.id,
-                render_open_in_warp_banner(open_in_warp_banner, self.view_id, appearance),
+                render_open_in_warp_banner(open_in_warp_banner, self.view_id, appearance, app),
             );
         }
 
@@ -24773,7 +24786,7 @@ impl TypedActionView for TerminalView {
             | StartLspServer => ActionAccessibilityContent::from_debug(),
             #[cfg(feature = "local_fs")]
             OpenCodeInWarp { .. } => ActionAccessibilityContent::from_debug(),
-            OpenInWarpBanner(action) => self.open_in_warp_banner_accessibility_content(*action),
+            OpenInWarpBanner(action) => self.open_in_warp_banner_accessibility_content(*action, ctx),
             OpenAIBlockAttachedBlocksMenu { .. } => Custom(AccessibilityContent::new_without_help(
                 "Open list of blocks attached as context to this AI query.".to_owned(),
                 WarpA11yRole::PopoverRole,

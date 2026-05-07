@@ -8,6 +8,7 @@ use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
     TextOptions,
 };
+use crate::i18n::{I18n, I18nKey};
 use crate::network::NetworkStatus;
 use crate::search_bar::SearchBar;
 use crate::server::cloud_objects::update_manager::{UpdateManager, UpdateManagerEvent};
@@ -668,6 +669,7 @@ impl RuleView {
         &self,
         project_row: ProjectScopedRow,
         appearance: &Appearance,
+        app: &AppContext,
     ) -> Option<Box<dyn Element>> {
         let row_name = project_row.file_path.to_str().map(|s| s.to_string())?;
         let mut row = Flex::row()
@@ -693,7 +695,7 @@ impl RuleView {
             appearance
                 .ui_builder()
                 .button(ButtonVariant::Outlined, project_row.mouse_state.clone())
-                .with_text_label("Open file".to_string())
+                .with_text_label(I18n::as_ref(app).tr(I18nKey::CommonOpenFile))
                 .build()
                 .on_click(move |ctx, _, _| {
                     ctx.dispatch_typed_action(RuleViewAction::OpenFile(file_path.clone()));
@@ -833,7 +835,7 @@ impl RuleView {
                     Some(self.render_global_rule_row(*global_row, appearance, app))
                 }
                 RuleRow::ProjectScoped(project_row) => {
-                    self.render_project_based_row(project_row, appearance)
+                    self.render_project_based_row(project_row, appearance, app)
                 }
             };
 

@@ -10,6 +10,7 @@ use crate::{
     },
     env_vars::active_env_var_collection_data::TrashStatus,
     external_secrets::SecretManager,
+    i18n::{I18n, I18nKey},
     menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields},
     pane_group::PaneEvent,
     server::cloud_objects::update_manager::UpdateManager,
@@ -172,7 +173,7 @@ impl EnvVarCollectionView {
         );
 
         let close_pane = Self::item(
-            "Close pane",
+            &I18n::as_ref(ctx).tr(I18nKey::CommonClosePane),
             EnvVarCollectionAction::EmitPaneEvent(PaneEvent::Close),
             trigger_to_keystroke(&Trigger::Custom(CustomAction::CloseCurrentSession.into()))
                 .map(|keystroke| keystroke.displayed()),
@@ -373,7 +374,7 @@ impl EnvVarCollectionView {
         // Add "Copy Link" to menu
         if let Some(link) = self.env_var_collection_link(ctx) {
             menu_items.push(
-                MenuItemFields::new("Copy link")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyLink))
                     .with_on_select_action(EnvVarCollectionAction::CopyLink(link))
                     .with_icon(Icon::Link)
                     .into_item(),

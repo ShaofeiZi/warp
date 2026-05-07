@@ -24,6 +24,7 @@ use warpui::{
 };
 
 use crate::settings::PrivacySettings;
+use crate::i18n::{I18n, I18nKey};
 use crate::themes::theme::ThemeKind;
 
 const PRIVACY_URL: &str = "https://warp.dev/privacy";
@@ -44,6 +45,7 @@ pub fn action_button_color_and_variant(appearance: &Appearance) -> (ColorU, Butt
 
 pub fn render_offline_contents<A>(
     appearance: &Appearance,
+    app: &AppContext,
     ui_builder: &UiBuilder,
     mouse_state_handle: MouseStateHandle,
     action: A,
@@ -101,7 +103,7 @@ where
             Some(click_button_style),
             None,
         )
-        .with_centered_text_label("Learn more".into())
+        .with_centered_text_label(I18n::as_ref(app).tr(I18nKey::CommonLearnMore).into())
         .build()
         .on_click(move |ctx, _, _| {
             ctx.dispatch_typed_action(action.clone());
@@ -483,7 +485,7 @@ pub fn render_privacy_settings_toggles<A: Action + Clone + 'static>(
             appearance
                 .ui_builder()
                 .link(
-                    "Learn more".into(),
+                    I18n::as_ref(app).tr(I18nKey::CommonLearnMore).into(),
                     Some(PRIVACY_URL.into()),
                     None,
                     handles.telemetry_docs_mouse.clone(),

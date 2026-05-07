@@ -1,4 +1,5 @@
 use crate::code::editor::scroll::ScrollPosition;
+use crate::i18n::{I18n, I18nKey};
 use crate::code::editor::view::CodeEditorRenderOptions;
 use crate::code::editor_management::CodeEditorStatus;
 use crate::code::global_buffer_model::GlobalBufferModel;
@@ -1955,7 +1956,7 @@ impl CodeView {
         if let Some(path) = self.local_path(ctx) {
             items.extend([
                 MenuItem::Separator,
-                MenuItemFields::new("Copy file path")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyFilePath))
                     .with_on_select_action(CodeViewAction::CopyFilePath)
                     .into_item(),
             ]);

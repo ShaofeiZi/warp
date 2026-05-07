@@ -16,6 +16,7 @@ use warpui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
 };
 
+use crate::i18n::{I18n, I18nKey};
 use crate::search::data_source::QueryFilter;
 use crate::search::item::SearchItemDetail;
 use crate::search::mixer::{AddAsyncSourceOptions, SearchMixer, SearchMixerEvent};
@@ -893,9 +894,9 @@ impl CloudModeV2SlashCommandView {
         let theme = appearance.theme();
         let menu_bg = inline_styles::menu_background_color(app);
         let label = if self.mixer.as_ref(app).is_loading() {
-            "Loading..."
+            I18n::as_ref(app).tr(I18nKey::CommonLoading)
         } else {
-            "No results"
+            "No results".to_string()
         };
         Container::new(
             Text::new(

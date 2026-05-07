@@ -1,5 +1,6 @@
-use warpui::{elements::MouseStateHandle, Element};
+use warpui::{elements::MouseStateHandle, AppContext, Element, SingletonEntity};
 
+use crate::i18n::{I18n, I18nKey};
 use crate::{appearance::Appearance, terminal::view::TerminalAction};
 
 use super::{
@@ -32,23 +33,24 @@ pub struct SSHBannerState {
 pub fn render_inline_ssh_wrapper_banner(
     state: &SSHBannerState,
     appearance: &Appearance,
+    app: &AppContext,
 ) -> Box<dyn Element> {
     let label_text_color = appearance.theme().active_ui_text_color().into_solid();
 
     let (style, title) = if state.wrapper_enabled {
         (
             InlineBannerStyle::LowPriority,
-            "Warp SSH wrapper enabled".to_string(),
+            I18n::as_ref(app).tr(I18nKey::CommonWarpSshWrapperEnabled),
         )
     } else {
         (
             InlineBannerStyle::VeryLowPriority,
-            "Warp SSH wrapper disabled".to_string(),
+            I18n::as_ref(app).tr(I18nKey::CommonWarpSshWrapperDisabled),
         )
     };
     let buttons = vec![
         InlineBannerTextButton {
-            text: "Learn more".to_string(),
+            text: I18n::as_ref(app).tr(I18nKey::CommonLearnMore),
             text_color: label_text_color,
             button_state: InlineBannerButtonState {
                 on_click_event: TerminalAction::LegacySSHBanner(SSHBannerAction::LearnMore),
@@ -59,7 +61,7 @@ pub fn render_inline_ssh_wrapper_banner(
             variant: InlineBannerTextButtonVariant::Secondary,
         },
         InlineBannerTextButton {
-            text: "Settings".to_string(),
+            text: I18n::as_ref(app).tr(I18nKey::CommonSettings),
             text_color: label_text_color,
             button_state: InlineBannerButtonState {
                 on_click_event: TerminalAction::LegacySSHBanner(SSHBannerAction::Settings),

@@ -19,6 +19,7 @@ use warpui::ui_components::components::UiComponent;
 use warpui::{AppContext, ModelHandle, SingletonEntity};
 
 use crate::ai::agent_tips::{AITip, AITipModel};
+use crate::i18n::{I18n, I18nKey};
 use crate::ai::loading::shimmering_warp_loading_text;
 use crate::terminal::view::ambient_agent::CloudModeTip;
 use crate::ui_components::blended_colors;
@@ -50,7 +51,7 @@ pub fn render_cloud_mode_loading_screen(
         // Add link at the end if it exists
         if let Some(link_target) = tip.link() {
             fragments.push(FormattedTextFragment::plain_text(" "));
-            fragments.push(FormattedTextFragment::hyperlink("Learn more", link_target));
+            fragments.push(FormattedTextFragment::hyperlink(I18n::as_ref(app).tr(I18nKey::CommonLearnMore), link_target));
         }
 
         let formatted_text = FormattedText::new(vec![FormattedTextLine::Line(fragments)]);

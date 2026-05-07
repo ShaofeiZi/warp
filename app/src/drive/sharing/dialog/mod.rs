@@ -8,6 +8,7 @@ use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::Owner;
 use crate::cloud_object::{CloudObject, ServerGuestSubject};
 use crate::editor::PropagateAndNoOpNavigationKeys;
+use crate::i18n::{I18n, I18nKey};
 use crate::menu::{self, Menu, MenuItem, MenuItemFields};
 use crate::send_telemetry_from_ctx;
 use crate::server::cloud_objects::update_manager::{
@@ -2415,6 +2416,7 @@ impl SharingDialog {
 
         let copy_button_background = appearance.theme().surface_2();
         let copy_button_foreground = appearance.theme().main_text_color(copy_button_background);
+        let copy_link_text = I18n::as_ref(app).tr(I18nKey::CommonCopyLink);
         let copy_button = appearance
             .ui_builder()
             .button(
@@ -2424,7 +2426,7 @@ impl SharingDialog {
             .with_text_and_icon_label(
                 TextAndIcon::new(
                     TextAndIconAlignment::IconFirst,
-                    "Copy link",
+                    copy_link_text,
                     Icon::Link.to_warpui_icon(copy_button_foreground),
                     MainAxisSize::Min,
                     MainAxisAlignment::SpaceBetween,

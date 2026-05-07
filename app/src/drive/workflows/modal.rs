@@ -29,6 +29,7 @@ use warpui::{
 };
 
 use crate::auth::UserUid;
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     appearance::Appearance,
     cloud_object::{
@@ -108,7 +109,6 @@ const ARGUMENT_DESCRIPTION_PLACEHOLDER_TEXT: &str = "Description";
 const ARGUMENT_DEFAULT_VALUE_PLACEHOLDER_TEXT: &str = "Default value (optional)";
 const SAVE_BUTTON_TEXT: &str = "Save workflow";
 const AI_ASSIST_BUTTON_TEXT: &str = "Autofill";
-const AI_ASSIST_LOADING_TEXT: &str = "Loading";
 const DEFAULT_ARGUMENT_PREFIX: &str = "argument";
 const UNSAVED_CHANGES_TEXT: &str = "You have unsaved changes.";
 const KEEP_EDITING_TEXT: &str = "Keep editing";
@@ -691,7 +691,7 @@ impl WorkflowModal {
 
         // Add "Copy workflow text" to menu
         menu_items.push(
-            MenuItemFields::new("Copy workflow text")
+            MenuItemFields::new(I18n::as_ref(app).tr(I18nKey::CommonCopyWorkflowText))
                 .with_on_select_action(WorkflowModalAction::CopyObjectToClipboard)
                 .with_icon(Icon::CopyMenuItem)
                 .into_item(),
@@ -1701,8 +1701,8 @@ impl WorkflowModal {
             .with_main_axis_alignment(MainAxisAlignment::SpaceBetween);
 
         let label_and_icon = match self.ai_metadata_assist_state {
-            AiAssistState::PreRequest => Some((AI_ASSIST_BUTTON_TEXT, Icon::AiAssistant)),
-            AiAssistState::RequestInFlight => Some((AI_ASSIST_LOADING_TEXT, Icon::Refresh)),
+            AiAssistState::PreRequest => Some((AI_ASSIST_BUTTON_TEXT.to_string(), Icon::AiAssistant)),
+            AiAssistState::RequestInFlight => Some((I18n::as_ref(app).tr(I18nKey::CommonLoading), Icon::Refresh)),
             AiAssistState::Generated => None,
         };
 

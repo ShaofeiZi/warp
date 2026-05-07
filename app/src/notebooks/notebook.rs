@@ -10,6 +10,7 @@ use warp_core::context_flag::ContextFlag;
 
 #[cfg(target_family = "wasm")]
 use crate::uri::web_intent_parser::open_url_on_desktop;
+use crate::{i18n::{I18n, I18nKey}};
 
 use warp_editor::{
     editor::NavigationKey,
@@ -1436,7 +1437,7 @@ impl NotebookView {
         // Add "Copy Link" to menu
         if let Some(link) = self.notebook_link(ctx) {
             menu_items.push(
-                MenuItemFields::new("Copy link")
+                MenuItemFields::new(I18n::as_ref(ctx).tr(I18nKey::CommonCopyLink))
                     .with_on_select_action(NotebookAction::CopyLink(link))
                     .with_icon(icons::Icon::Link)
                     .into_item(),

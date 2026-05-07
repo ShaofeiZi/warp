@@ -7,6 +7,7 @@ use std::{
     sync::Arc,
 };
 
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     ai::{
         agent::{AgentReviewCommentBatch, DiffSetHunk},
@@ -2944,11 +2945,12 @@ impl CodeReviewView {
             });
 
             let open_tab_path = file_path.clone();
+            let open_file_tooltip = I18n::as_ref(ctx).tr(I18nKey::CommonOpenFile);
             let open_in_tab_button = ctx.add_typed_action_view(move |_ctx| {
                 ActionButton::new("", NakedTheme)
                     .with_icon(Icon::LinkExternal)
                     .with_size(ButtonSize::InlineActionHeader)
-                    .with_tooltip("Open file")
+                    .with_tooltip(open_file_tooltip)
                     .on_click(move |ctx| {
                         ctx.dispatch_typed_action(CodeReviewAction::OpenInNewTab {
                             path: open_tab_path.clone(),
@@ -2994,11 +2996,12 @@ impl CodeReviewView {
             });
 
             let copy_path = file.file_diff.file_path.clone();
+            let copy_file_path_tooltip = I18n::as_ref(ctx).tr(I18nKey::CommonCopyFilePath);
             let copy_path_button = ctx.add_typed_action_view(move |_ctx| {
                 ActionButton::new("", NakedTheme)
                     .with_icon(Icon::Copy)
                     .with_size(ButtonSize::InlineActionHeader)
-                    .with_tooltip("Copy file path")
+                    .with_tooltip(copy_file_path_tooltip)
                     .on_click(move |ctx| {
                         ctx.dispatch_typed_action(CodeReviewAction::CopyFilePath(copy_path.clone()))
                     })

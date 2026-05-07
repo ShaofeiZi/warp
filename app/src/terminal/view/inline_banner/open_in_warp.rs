@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
-use warpui::{elements::MouseStateHandle, fonts::Weight, Element, EntityId};
+use warpui::{elements::MouseStateHandle, fonts::Weight, AppContext, Element, EntityId, SingletonEntity};
 
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     appearance::Appearance,
     terminal::{
@@ -78,6 +79,7 @@ pub fn render_open_in_warp_banner(
     state: &OpenInWarpBannerState,
     view_id: EntityId,
     appearance: &Appearance,
+    app: &AppContext,
 ) -> Box<dyn Element> {
     let button_text = match state.target.file_type {
         OpenableFileType::Markdown => "View in Warp",
@@ -100,7 +102,7 @@ pub fn render_open_in_warp_banner(
     };
 
     let learn_more_button = InlineBannerTextButton {
-        text: "Learn more".to_string(),
+        text: I18n::as_ref(app).tr(I18nKey::CommonLearnMore),
         text_color: appearance.theme().active_ui_text_color().into_solid(),
         button_state: InlineBannerButtonState {
             on_click_event: TerminalAction::OpenInWarpBanner(OpenInWarpBannerAction::LearnMore),

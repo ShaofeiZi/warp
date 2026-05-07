@@ -22,6 +22,7 @@ use crate::util::file::external_editor::EditorSettings;
 use crate::util::openable_file_type::{is_supported_image_file, resolve_file_target, FileTarget};
 use crate::{
     drive::OpenWarpDriveObjectArgs,
+    i18n::{I18n, I18nKey},
     terminal::model::session::Session,
     uri::parse_url_paths::{get_item_data_from_warp_link, WarpWebLink},
     workspace::ActiveSession,
@@ -53,7 +54,7 @@ pub enum LinkTarget {
 
 impl LinkTarget {
     /// A secondary action to show in the tooltip for this link.
-    pub fn secondary_action(&self) -> Option<SecondaryAction> {
+    pub fn secondary_action(&self, ctx: &AppContext) -> Option<SecondaryAction> {
         match self {
             LinkTarget::LocalDirectory { .. } => Some(SecondaryAction {
                 label: "New session".into(),
@@ -63,7 +64,7 @@ impl LinkTarget {
             LinkTarget::LocalFile {
                 is_markdown: true, ..
             } => Some(SecondaryAction {
-                label: "Open in editor".into(),
+                label: I18n::as_ref(ctx).tr(I18nKey::CommonOpenInEditor).into(),
                 tooltip: None,
                 accessibility_content: "Edit Markdown file".into(),
             }),

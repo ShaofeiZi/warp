@@ -6,6 +6,7 @@ use warpui::{
     View, ViewContext,
 };
 
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     auth::auth_view_modal::AuthRedirectPayload,
     auth::credentials::RefreshToken,
@@ -125,7 +126,7 @@ impl View for WebHandoffView {
 
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
         let label = match &self.state {
-            HandoffState::LoadingFromHost | HandoffState::LoadingFromSessionCookie => "Loading...",
+            HandoffState::LoadingFromHost | HandoffState::LoadingFromSessionCookie => I18n::as_ref(app).tr(I18nKey::CommonLoading),
             HandoffState::Failed => "Error authenticating - please refresh the page",
         };
 

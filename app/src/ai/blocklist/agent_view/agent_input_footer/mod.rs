@@ -17,6 +17,7 @@ use crate::{
     appearance::Appearance,
     auth::{AuthManager, AuthStateProvider},
     completer::SessionContext,
+    i18n::{I18n, I18nKey},
     context_chips::{
         self,
         display_chip::{DisplayChip, DisplayChipConfig},
@@ -579,11 +580,15 @@ impl AgentInputFooter {
                 })
         });
 
-        let stop_remote_control_button = ctx.add_typed_action_view(|_ctx| {
-            ActionButton::new("Stop sharing", RemoteControlButtonTheme)
+        let stop_remote_control_button = ctx.add_typed_action_view(|ctx| {
+            let stop_sharing_text = I18n::as_ref(ctx).tr(I18nKey::CommonStopSharing);
+            ActionButton::new(
+                stop_sharing_text.clone(),
+                RemoteControlButtonTheme,
+            )
                 .with_icon(Icon::StopFilled)
                 .with_icon_ansi_color(AnsiColorIdentifier::Red)
-                .with_tooltip("Stop sharing")
+                .with_tooltip(stop_sharing_text)
                 .with_size(cli_button_size)
                 .with_tooltip_alignment(TooltipAlignment::Left)
                 .on_click(|ctx| {

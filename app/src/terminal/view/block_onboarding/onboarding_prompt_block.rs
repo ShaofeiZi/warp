@@ -1,4 +1,5 @@
 use crate::appearance::Appearance;
+use crate::i18n::{I18n, I18nKey};
 use crate::context_chips::prompt::Prompt;
 use crate::report_if_error;
 use crate::send_telemetry_from_ctx;
@@ -56,7 +57,7 @@ impl OnboardingPromptBlock {
         ctx.notify();
     }
 
-    fn render_text(&self, appearance: &Appearance) -> Box<dyn Element> {
+    fn render_text(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let current_theme = appearance.theme();
         let font_family = appearance.monospace_font_family();
         let font_size = appearance.monospace_font_size();
@@ -66,7 +67,6 @@ impl OnboardingPromptBlock {
         const LINE_ONE: &str = "Next, let’s set up your prompt. Warp has a custom prompt builder or you can select PS1 to honor your pre-existing prompt configuration.";
         const LINE_TWO: &str =
             "Warp works with many custom prompts like oh-my-zsh, Starship, Powerlevel10K. ";
-        const LINK_TEXT: &str = "Learn more";
         const LINK_DESTINATION: &str =
             "https://docs.warp.dev/terminal/appearance/prompt#custom-prompt-compatibility-table";
 
@@ -83,7 +83,7 @@ impl OnboardingPromptBlock {
                     FormattedTextElement::new(
                         FormattedText::new([FormattedTextLine::Line(vec![
                             FormattedTextFragment::plain_text(LINE_TWO),
-                            FormattedTextFragment::hyperlink(LINK_TEXT, LINK_DESTINATION),
+                            FormattedTextFragment::hyperlink(I18n::as_ref(app).tr(I18nKey::CommonLearnMore), LINK_DESTINATION),
                         ])]),
                         font_size,
                         font_family,
@@ -433,7 +433,7 @@ impl View for OnboardingPromptBlock {
         let border_color = current_theme.outline();
 
         let mut col = Flex::column()
-            .with_child(self.render_text(appearance))
+            .with_child(self.render_text(appearance, ctx))
             .with_child(
                 Wrap::row()
                     .with_run_spacing(-PADDING_BOTTOM)

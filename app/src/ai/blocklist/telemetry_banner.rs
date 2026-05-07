@@ -1,3 +1,4 @@
+use crate::i18n::{I18n, I18nKey};
 use crate::{
     settings_view::SettingsSection,
     terminal::view::TerminalAction,
@@ -102,7 +103,7 @@ impl View for TelemetryBanner {
                 Container::new(
                     ui_builder
                         .button(ButtonVariant::Text, self.learn_more_mouse_state.clone())
-                        .with_text_label("Learn more".into())
+                        .with_text_label(I18n::as_ref(app).tr(I18nKey::CommonLearnMore).into())
                         .with_style(UiComponentStyles {
                             height: Some(24.),
                             padding: Some(Coords {

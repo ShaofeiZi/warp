@@ -37,6 +37,7 @@ use crate::{
         auth_manager::LoginGatedFeature, auth_state::AuthState, auth_view_modal::AuthViewVariant,
         AuthManager, AuthStateProvider, UserUid,
     },
+    i18n::{I18n, I18nKey},
     menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields},
     modal::{Modal, ModalEvent, ModalViewState},
     pricing::{PricingInfoModel, PricingInfoModelEvent},
@@ -365,8 +366,8 @@ impl BillingAndUsagePageView {
     }
 
     fn build_page() -> PageType<Self> {
-        let categories = vec![Category::new(
-            "Billing and usage",
+        let categories = vec![Category::new_i18n(
+            I18nKey::SettingsBillingCategoryBillingUsage,
             vec![
                 Box::new(PlanWidget::default()),
                 Box::new(UsageWidget::default()),
@@ -3373,6 +3374,7 @@ impl PlanWidget {
         &self,
         auth_state: &AuthState,
         appearance: &Appearance,
+        app: &AppContext,
     ) -> Box<dyn Element> {
         let button_styles = UiComponentStyles {
             font_size: Some(14.),
@@ -3394,7 +3396,7 @@ impl PlanWidget {
                 self.ui_state_handles.anonymous_user_sign_up_button.clone(),
             )
             .with_style(button_styles)
-            .with_text_label("Sign up".to_owned())
+            .with_text_label(I18n::as_ref(app).tr(I18nKey::SettingsAccountSignUp))
             .build()
             .on_click(move |ctx, _, _| {
                 ctx.dispatch_typed_action(BillingAndUsagePageAction::SignupAnonymousUser);
@@ -3675,7 +3677,7 @@ impl SettingsWidget for PlanWidget {
         app: &AppContext,
     ) -> Box<dyn Element> {
         let account_info = if view.auth_state.is_anonymous_or_logged_out() {
-            self.render_anonymous_account_info(view.auth_state.as_ref(), appearance)
+            self.render_anonymous_account_info(view.auth_state.as_ref(), appearance, app)
         } else {
             self.render_account_info(view.auth_state.as_ref(), app, appearance)
         };
